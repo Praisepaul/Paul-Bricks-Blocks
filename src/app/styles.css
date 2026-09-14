@@ -43,7 +43,7 @@ button, input, textarea, select { font: inherit; }
 .error-text { margin: 0; color: #b91c1c; font-size: 14px; }
 .success-text { margin: 0; color: #047857; font-size: 14px; }
 .account-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: white; color: #6b7280; font-size: 13px; }
-.users-page, .settings-page, .customers-page, .products-page, .sales-page { display: grid; gap: 14px; }
+.users-page, .settings-page, .customers-page, .products-page, .sales-page, .purchases-page { display: grid; gap: 14px; }
 .page-heading h2 { margin: 4px 0; font-size: 25px; }
 .page-heading p:last-child { margin: 0; color: #6b7280; }
 .form-card h3, .user-list h3 { margin: 0; }
