@@ -1,22 +1,25 @@
 # Project Status
 
 ## Current phase
-**Phase 1 — Foundation**
+**Phase 1B — MERN/MongoDB foundation**
 
-## Completed in foundation-v0.1
-- Repository workflow established.
-- Architecture documented.
+## Completed
+- React + TypeScript + Vite PWA scaffold.
 - Owner/Partner permission model documented.
 - Audit-log principles documented.
-- Core business rules documented.
-- Development workflow documented.
-- Initial architecture decisions recorded.
+- Node.js + Express + TypeScript API foundation.
+- MongoDB connection and indexes.
+- JWT login/session foundation.
+- bcrypt password hashing.
+- One-time owner bootstrap endpoint for first local setup.
+- MERN frontend-to-API authentication wiring.
+- Supabase foundation removed because it was not merged.
 
-## In progress
-- Frontend application scaffold.
-- Authentication foundation.
-- Backend provider selection and database foundation.
-- Dashboard shell.
+## Current branch
+`feature/mongodb-foundation-v0.1c`
+
+## Next phase
+Build the first real business module: customers, products, sales, sale line items, payments and invoice-number foundation, with backend-enforced owner/partner permissions and audit events.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, dashboard, audit framework.

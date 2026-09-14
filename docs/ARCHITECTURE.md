@@ -3,12 +3,14 @@
 ## Purpose
 A mobile-first, installable PWA for simple business management. The system is designed for a small bricks/blocks business and must remain easy for a non-technical owner to use.
 
-## Initial stack direction
+## Current stack
 - Frontend: React + TypeScript + Vite
 - PWA: Vite PWA tooling
-- Backend: managed Postgres/Auth/Storage platform (provider to be finalized before implementation)
-- Authentication: email/password or another simple secure sign-in flow
-- Authorization: role-based access enforced by the backend
+- Backend: Node.js + Express + TypeScript
+- Database: MongoDB
+- Authentication: JWT issued by the Node API
+- Password hashing: bcryptjs
+- Authorization: role-based access enforced by the Node API
 
 ## Application areas
 1. Dashboard
@@ -37,8 +39,10 @@ src/
   app/          Application shell, routing, providers
   components/   Shared UI components
   features/     Business features grouped by domain
-  lib/          Infrastructure and shared helpers
+  lib/          Frontend infrastructure and shared helpers
   types/        Shared TypeScript types
+server/
+  src/          Express API, MongoDB connection, auth, middleware and routes
 public/         PWA/static assets
 docs/           Living architecture and business documentation
 ```
