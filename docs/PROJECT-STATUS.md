@@ -1,7 +1,7 @@
 # Project Status
 
 ## Current phase
-**Phase 2 — Money: Sales foundation**
+**Phase 2 — Money: Sales + Purchases foundation**
 
 ## Completed
 - React + TypeScript + Vite PWA scaffold.
@@ -19,23 +19,26 @@
 - Products / Brick Types: list, add, edit, enable/disable, MongoDB persistence and audit events.
 - Sales: customer + product + quantity + price + server-calculated total + generated invoice number + recent sales list.
 - Sales creation audit events and MongoDB indexes.
+- Purchases: supplier + product + quantity + purchase price + server-calculated total + generated purchase number + recent purchases list.
+- Purchase creation audit events and MongoDB indexes.
 
 ## Current branch
 `main`
 
 ## Current module
-**Sales** — ready for local verification.
+**Purchases** — ready for local verification.
 
-## Sales scope in this first version
-- Owners and partners can create sales.
-- Only active customers and active products can be selected.
-- Product selling price is prefilled but can be changed for a specific sale.
-- Historical sales keep customer/product names, unit, quantity and final sale price.
-- Invoice numbers are generated automatically as `INV-YYYYMMDD-XXXXXX`.
-- Stock, payments, GST calculation, PDF/printing and invoice sharing are intentionally not included yet.
+## Purchase scope in this first version
+- Owners and partners can create purchases.
+- Supplier name is required and stored with the purchase.
+- Only active products can be selected.
+- Product purchase price is prefilled but can be changed for a specific purchase.
+- Historical purchases keep supplier/product names, unit, quantity and final purchase price.
+- Purchase numbers are generated automatically as `PUR-YYYYMMDD-XXXXXX`.
+- Stock, payments, GST calculation, PDF/printing and supplier master management are intentionally not included yet.
 
 ## Next module
-After Sales is verified, build **Purchases**. That will give us the second side of the money flow and prepare the clean foundation for stock movements.
+After Purchases is verified, build the next money-flow piece, likely **Expenses**, then design **Stock movements** using the verified Sales + Purchases transactions rather than adding stock quantity to Products.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
