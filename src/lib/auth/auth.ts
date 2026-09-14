@@ -2,6 +2,7 @@ import type { AuthSession, AuthUser } from '../../types/auth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
 const TOKEN_KEY = 'pbb_auth_token'
+const AUTH_CHANGED_EVENT = 'pbb-auth-changed'
 
 export function getStoredToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -9,6 +10,10 @@ export function getStoredToken() {
 
 function storeToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token)
+}
+
+function notifyAuthChanged() {
+  window.dispatchEvent(new Event(AUTH_CHANGED_EVENT))
 }
 
 export function clearStoredToken() {
@@ -33,11 +38,13 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
     body: JSON.stringify({ email, password }),
   })
   storeToken(result.token)
+  notifyAuthChanged()
   return result
 }
 
 export async function signOut() {
   clearStoredToken()
+  notifyAuthChanged()
 }
 
 export async function loadAuthUser(): Promise<AuthUser | null> {
