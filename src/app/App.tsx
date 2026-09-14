@@ -2,12 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
 import { signIn, signOut } from '../lib/auth/auth'
 import { useAuth } from '../lib/auth/AuthProvider'
+import { Customers } from './Customers'
 import { Users } from './Users'
 import { Settings } from './Settings'
 
-type Section = 'dashboard' | 'sales' | 'purchases' | 'labour' | 'bills' | 'history' | 'users' | 'settings'
+type Section = 'dashboard' | 'customers' | 'sales' | 'purchases' | 'labour' | 'bills' | 'history' | 'users' | 'settings'
 const sections: Array<{ id: Section; label: string }> = [
-  { id: 'dashboard', label: 'Home' }, { id: 'sales', label: 'Sales' }, { id: 'purchases', label: 'Purchases' },
+  { id: 'dashboard', label: 'Home' }, { id: 'customers', label: 'Customers' }, { id: 'sales', label: 'Sales' }, { id: 'purchases', label: 'Purchases' },
   { id: 'labour', label: 'Labour' }, { id: 'bills', label: 'Bills' }, { id: 'history', label: 'History' },
 ]
 
@@ -27,7 +28,7 @@ function AuthenticatedApp({ roleLabel }: { roleLabel: string }) {
   const visibleSections = isOwner ? [...sections, { id: 'users' as Section, label: 'Users' }, { id: 'settings' as Section, label: 'Settings' }] : sections
   return <div className="app-shell">
     <header className="topbar"><div><p className="eyebrow">Paul Bricks & Blocks</p><h1>{getSectionTitle(activeSection)}</h1></div><div className="user-badge">{roleLabel}</div></header>
-    <main className="page-content">{activeSection === 'dashboard' ? <Dashboard /> : activeSection === 'users' && isOwner ? <Users /> : activeSection === 'settings' && isOwner ? <Settings /> : <Placeholder section={activeSection} />}
+    <main className="page-content">{activeSection === 'dashboard' ? <Dashboard /> : activeSection === 'customers' ? <Customers /> : activeSection === 'users' && isOwner ? <Users /> : activeSection === 'settings' && isOwner ? <Settings /> : <Placeholder section={activeSection} />}
       <div className="account-strip"><span>{user?.email ?? 'Signed in'}</span><Button variant="secondary" onClick={() => void signOut()}>Sign out</Button></div>
     </main>
     <nav className="bottom-nav" aria-label="Main navigation">{visibleSections.map((section) => <Button key={section.id} variant={activeSection === section.id ? 'active' : 'nav'} onClick={() => setActiveSection(section.id)}>{section.label}</Button>)}</nav>
