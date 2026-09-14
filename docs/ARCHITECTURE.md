@@ -31,10 +31,11 @@ A mobile-first, installable PWA for simple business management. The system is de
 - `customers`: customer master records with contact details, optional GST number, active status and timestamps.
 - `products`: product/brick-type master records with unit, selling price, purchase price and active status.
 - `sales`: completed sales with generated invoice number, customer/product snapshots, quantity, sale price, total and creator.
+- `purchases`: purchase records with generated purchase number, supplier name, product snapshot, quantity, purchase price, total and creator.
 
 ## Authentication and permissions
 - Owner: full business administration, including users and settings.
-- Partner: day-to-day business operations such as customers, products and sales.
+- Partner: day-to-day business operations such as customers, products, sales and purchases.
 - Backend authorization is authoritative; frontend visibility is only a usability feature.
 
 ## Customers
@@ -52,6 +53,17 @@ Authenticated owners and partners can create and view sales through `/api/sales`
 - Total is calculated on the server and rounded to two decimal places.
 - Sales are currently informational money records; stock deduction, tax, payments and PDF invoices will be added in later phases.
 - Sale creation is recorded in `audit_events`.
+
+## Purchases
+Authenticated owners and partners can create and view purchases through `/api/purchases`.
+- A purchase requires a supplier name, active product, positive quantity and non-negative unit price.
+- The product's current purchase price is used to prefill the frontend, while the final purchase price is stored on the purchase for historical accuracy.
+- The server generates a unique purchase number in the form `PUR-YYYYMMDD-XXXXXX`.
+- Product name and unit are snapshotted into the purchase.
+- Total is calculated on the server and rounded to two decimal places.
+- Purchases currently record the money transaction only; stock increases will be introduced through a dedicated stock movement design.
+- Purchase creation is recorded in `audit_events`.
+- Supplier is currently stored as a required text snapshot. A dedicated supplier master can be added later when supplier management becomes useful.
 
 ## Design principles
 - Mobile first.
