@@ -28,26 +28,30 @@ A mobile-first, installable PWA for simple business management. The system is de
 - `users`: owner and partner accounts.
 - `audit_events`: immutable activity records.
 - `business_settings`: one business profile document identified by `_id: "business"`.
-- `customers`: customer records with contact details, optional GST number, active status and timestamps.
+- `customers`: customer master records with contact details, optional GST number, active status and timestamps.
+- `products`: product/brick-type master records with unit, selling price, purchase price and active status.
+- `sales`: completed sales with generated invoice number, customer/product snapshots, quantity, sale price, total and creator.
+
+## Authentication and permissions
+- Owner: full business administration, including users and settings.
+- Partner: day-to-day business operations such as customers, products and sales.
+- Backend authorization is authoritative; frontend visibility is only a usability feature.
 
 ## Customers
-Customers are available to authenticated owners and partners through `/api/customers`.
-- Anyone signed in can view customers.
-- Owners and partners can create and edit customers.
-- Customers are soft-disabled with `isActive: false` rather than deleted.
-- Customer create/update actions are recorded in the audit log.
-- The frontend keeps the workflow simple: add, edit, enable/disable, and view.
-- `customers`: customer master records with soft active/inactive state.
-- `products`: product/brick-type master records with unit, selling price, purchase price and soft active/inactive state.
-
-## Business settings
-The owner can maintain the business name, phone number, address, optional GST number, and currency. Currency is currently fixed to INR so future financial modules have a clear default. Settings are served by `/api/settings` and protected by the existing authentication and owner authorization rules.
-
-## Customers
-Authenticated owners and partners can create, view, edit and enable/disable customers through `/api/customers`. Customer records are not physically deleted because future sales may reference them.
+Authenticated owners and partners can create, view, edit and enable/disable customers through `/api/customers`. Customer records are not physically deleted because future sales may reference them. Customer create/update actions are recorded in the audit log.
 
 ## Products / brick types
-Authenticated owners and partners can create, view, edit and enable/disable products through `/api/products`. Each product has a name, selling unit, selling price and purchase price. Prices are stored as non-negative numbers in INR. Stock quantity is deliberately not part of this master record yet; stock will be introduced with the purchase/sales flow.
+Authenticated owners and partners can create, view, edit and enable/disable products through `/api/products`. Each product has a name, selling unit, selling price and purchase price. Prices are stored as non-negative numbers in INR. Stock quantity is deliberately not part of this master record yet; stock will be introduced with purchase/sales transactions.
+
+## Sales
+Authenticated owners and partners can create and view sales through `/api/sales`.
+- A sale requires an active customer, active product, positive quantity and non-negative unit price.
+- The product's current selling price is used to prefill the frontend, but the final sale price is stored on the sale so later price changes do not rewrite old sales.
+- The server generates a unique invoice number in the form `INV-YYYYMMDD-XXXXXX`.
+- Customer name, product name and unit are snapshotted into the sale for stable historical display.
+- Total is calculated on the server and rounded to two decimal places.
+- Sales are currently informational money records; stock deduction, tax, payments and PDF invoices will be added in later phases.
+- Sale creation is recorded in `audit_events`.
 
 ## Design principles
 - Mobile first.
@@ -57,13 +61,12 @@ Authenticated owners and partners can create, view, edit and enable/disable prod
 - Financial records are never silently destroyed.
 - Important records use soft deletion where appropriate.
 - Audit events are immutable.
-- Backend authorization is authoritative; frontend visibility is only a usability feature.
+- Keep financial calculations on the backend authoritative.
 - GST-ready data structures without prematurely implementing every GST rule.
 
 ## Project structure
 ```text
 src/
-  app/          Application shell and screens
   app/          Application shell and business screens
   components/   Shared UI components
   lib/          Frontend API helpers and shared infrastructure
