@@ -14,21 +14,31 @@ A mobile-first, installable PWA for simple business management. The system is de
 
 ## Application areas
 1. Dashboard
-2. Sales and invoices
-3. Purchases and expenses
-4. Stock
-5. Labour
-6. Bills and recurring expenses
-7. History / audit
-8. Users and business settings (owner only)
+2. Customers
+3. Products / brick types
+4. Sales and invoices
+5. Purchases and expenses
+6. Stock
+7. Labour
+8. Bills and recurring expenses
+9. History / audit
+10. Users and business settings (owner only)
 
 ## Current data areas
 - `users`: owner and partner accounts.
 - `audit_events`: immutable activity records.
 - `business_settings`: one business profile document identified by `_id: "business"`.
+- `customers`: customer master records with soft active/inactive state.
+- `products`: product/brick-type master records with unit, selling price, purchase price and soft active/inactive state.
 
 ## Business settings
 The owner can maintain the business name, phone number, address, optional GST number, and currency. Currency is currently fixed to INR so future financial modules have a clear default. Settings are served by `/api/settings` and protected by the existing authentication and owner authorization rules.
+
+## Customers
+Authenticated owners and partners can create, view, edit and enable/disable customers through `/api/customers`. Customer records are not physically deleted because future sales may reference them.
+
+## Products / brick types
+Authenticated owners and partners can create, view, edit and enable/disable products through `/api/products`. Each product has a name, selling unit, selling price and purchase price. Prices are stored as non-negative numbers in INR. Stock quantity is deliberately not part of this master record yet; stock will be introduced with the purchase/sales flow.
 
 ## Design principles
 - Mobile first.
@@ -44,10 +54,9 @@ The owner can maintain the business name, phone number, address, optional GST nu
 ## Project structure
 ```text
 src/
-  app/          Application shell, routing, providers
+  app/          Application shell and business screens
   components/   Shared UI components
-  features/     Business features grouped by domain
-  lib/          Frontend infrastructure and shared helpers
+  lib/          Frontend API helpers and shared infrastructure
   types/        Shared TypeScript types
 server/
   src/          Express API, MongoDB connection, auth, middleware and routes
@@ -56,4 +65,4 @@ docs/           Living architecture and business documentation
 ```
 
 ## Change discipline
-Before changing code, inspect the latest `main` and relevant feature branch code. Preserve existing filenames and public function names unless there is a documented reason to change them. Update the living documentation whenever architecture, permissions, business rules, or data structures change.
+Before changing code, inspect the latest `main` and relevant feature code. Preserve existing filenames and public function names unless there is a documented reason to change them. Update the living documentation whenever architecture, permissions, business rules, or data structures change.
