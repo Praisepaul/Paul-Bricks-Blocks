@@ -1,46 +1,52 @@
-import type { Session } from '@supabase/supabase-js'
-import { supabase } from '../supabase/client'
-import type { AuthUser, UserProfile } from '../../types/auth'
+import type { AuthSession, AuthUser } from '../../types/auth'
 
-export async function getSession(): Promise<Session | null> {
-  if (!supabase) return null
-  const { data } = await supabase.auth.getSession()
-  return data.session
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
+const TOKEN_KEY = 'pbb_auth_token'
+
+export function getStoredToken() {
+  return localStorage.getItem(TOKEN_KEY)
 }
 
-export async function signIn(email: string, password: string) {
-  if (!supabase) throw new Error('Supabase is not configured.')
-  return supabase.auth.signInWithPassword({ email, password })
+function storeToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token)
+}
+
+export function clearStoredToken() {
+  localStorage.removeItem(TOKEN_KEY)
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers)
+  headers.set('Content-Type', 'application/json')
+  const token = getStoredToken()
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers })
+  const body = (await response.json().catch(() => ({}))) as { message?: string }
+  if (!response.ok) throw new Error(body.message ?? 'Request failed')
+  return body as T
+}
+
+export async function signIn(email: string, password: string): Promise<AuthSession> {
+  const result = await request<AuthSession>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+  storeToken(result.token)
+  return result
 }
 
 export async function signOut() {
-  if (!supabase) return
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
+  clearStoredToken()
 }
 
 export async function loadAuthUser(): Promise<AuthUser | null> {
-  if (!supabase) return null
-  const { data: sessionData } = await supabase.auth.getSession()
-  const user = sessionData.session?.user
-  if (!user) return null
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name, role, is_active')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  return {
-    id: user.id,
-    email: user.email ?? null,
-    profile: profile
-      ? ({
-          id: profile.id,
-          fullName: profile.full_name,
-          role: profile.role as UserProfile['role'],
-          isActive: profile.is_active,
-        } satisfies UserProfile)
-      : null,
+  if (!getStoredToken()) return null
+  try {
+    const result = await request<{ user: AuthUser }>('/auth/me')
+    return result.user
+  } catch {
+    clearStoredToken()
+    return null
   }
 }
