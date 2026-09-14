@@ -13,6 +13,8 @@ export async function connectDb(): Promise<Db> {
     db.collection('products').createIndex({ name: 1 }),
     db.collection('sales').createIndex({ createdAt: -1 }),
     db.collection('sales').createIndex({ invoiceNumber: 1 }, { unique: true }),
+    db.collection('purchases').createIndex({ createdAt: -1 }),
+    db.collection('purchases').createIndex({ purchaseNumber: 1 }, { unique: true }),
   ])
   return db
 }
