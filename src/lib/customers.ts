@@ -1,0 +1,53 @@
+export interface Customer {
+  id: string
+  name: string
+  phone: string
+  address: string
+  gstNumber: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CustomerInput {
+  name: string
+  phone: string
+  address: string
+  gstNumber: string
+  isActive?: boolean
+}
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers)
+  headers.set('Content-Type', 'application/json')
+  const token = localStorage.getItem('pbb_auth_token')
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers })
+  const body = (await response.json().catch(() => ({}))) as { message?: string }
+  if (!response.ok) throw new Error(body.message ?? 'Request failed')
+  return body as T
+}
+
+export async function listCustomers(): Promise<Customer[]> {
+  const result = await request<{ customers: Customer[] }>('/customers')
+  return result.customers
+}
+
+export async function createCustomer(input: CustomerInput): Promise<Customer> {
+  const result = await request<{ customer: Customer }>('/customers', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  return result.customer
+}
+
+export async function updateCustomer(id: string, input: CustomerInput): Promise<Customer> {
+  const result = await request<{ customer: Customer }>(`/customers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+  return result.customer
+}
