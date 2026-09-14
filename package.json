@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "latest",
     "react": "latest",
     "react-dom": "latest",
     "vite-plugin-pwa": "latest"
