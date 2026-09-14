@@ -22,6 +22,14 @@ A mobile-first, installable PWA for simple business management. The system is de
 7. History / audit
 8. Users and business settings (owner only)
 
+## Current data areas
+- `users`: owner and partner accounts.
+- `audit_events`: immutable activity records.
+- `business_settings`: one business profile document identified by `_id: "business"`.
+
+## Business settings
+The owner can maintain the business name, phone number, address, optional GST number, and currency. Currency is currently fixed to INR so future financial modules have a clear default. Settings are served by `/api/settings` and protected by the existing authentication and owner authorization rules.
+
 ## Design principles
 - Mobile first.
 - Large, obvious actions.
