@@ -37,9 +37,17 @@ Customers are available to authenticated owners and partners through `/api/custo
 - Customers are soft-disabled with `isActive: false` rather than deleted.
 - Customer create/update actions are recorded in the audit log.
 - The frontend keeps the workflow simple: add, edit, enable/disable, and view.
+- `customers`: customer master records with soft active/inactive state.
+- `products`: product/brick-type master records with unit, selling price, purchase price and soft active/inactive state.
 
 ## Business settings
 The owner can maintain the business name, phone number, address, optional GST number, and currency. Currency is currently fixed to INR so future financial modules have a clear default. Settings are served by `/api/settings` and protected by the existing authentication and owner authorization rules.
+
+## Customers
+Authenticated owners and partners can create, view, edit and enable/disable customers through `/api/customers`. Customer records are not physically deleted because future sales may reference them.
+
+## Products / brick types
+Authenticated owners and partners can create, view, edit and enable/disable products through `/api/products`. Each product has a name, selling unit, selling price and purchase price. Prices are stored as non-negative numbers in INR. Stock quantity is deliberately not part of this master record yet; stock will be introduced with the purchase/sales flow.
 
 ## Design principles
 - Mobile first.
@@ -56,6 +64,7 @@ The owner can maintain the business name, phone number, address, optional GST nu
 ```text
 src/
   app/          Application shell and screens
+  app/          Application shell and business screens
   components/   Shared UI components
   lib/          Frontend API helpers and shared infrastructure
   types/        Shared TypeScript types
@@ -66,4 +75,4 @@ docs/           Living architecture and business documentation
 ```
 
 ## Change discipline
-Before changing code, inspect the latest `main` and relevant feature branch code. Preserve existing filenames and public function names unless there is a documented reason to change them. Update the living documentation whenever architecture, permissions, business rules, or data structures change.
+Before changing code, inspect the latest `main` and relevant feature code. Preserve existing filenames and public function names unless there is a documented reason to change them. Update the living documentation whenever architecture, permissions, business rules, or data structures change.
