@@ -13,16 +13,18 @@
 - bcrypt password hashing.
 - One-time owner bootstrap endpoint for first local setup.
 - MERN frontend-to-API authentication wiring.
+- Owner user management and Partner accounts.
+- Owner-only business settings for business name, phone, address, optional GST number and INR currency.
 - Supabase foundation removed because it was not merged.
 
 ## Current branch
-`feature/mongodb-foundation-v0.1c`
+`main`
 
 ## Next phase
 Build the first real business module: customers, products, sales, sale line items, payments and invoice-number foundation, with backend-enforced owner/partner permissions and audit events.
 
 ## Planned phases
-1. Foundation: authentication, users, RBAC, database, dashboard, audit framework.
+1. Foundation: authentication, users, RBAC, database, business settings, dashboard, audit framework.
 2. Money: sales, invoices, purchases, expenses, payments, customers/suppliers.
 3. Documents: invoice/PDF, print, Android sharing, attachments.
 4. Stock.
