@@ -11,7 +11,7 @@
   "dependencies": {
     "bcryptjs": "latest",
     "cors": "latest",
-    "dotenv": "latest",
+    "dotenv": "^17.4.2",
     "express": "latest",
     "jsonwebtoken": "latest",
     "mongodb": "latest"
