@@ -1,8 +1,37 @@
-import type { AuthSession, AuthUser } from '../../types/auth'
+import type { AuthSession, AuthUser, UserRole } from '../../types/auth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
 const TOKEN_KEY = 'pbb_auth_token'
 const AUTH_CHANGED_EVENT = 'pbb-auth-changed'
+
+type ApiUser = {
+  id: string
+  email: string
+  fullName: string
+  role: UserRole
+  isActive: boolean
+  permissions: string[]
+}
+
+type ApiAuthResponse = {
+  token: string
+  user: ApiUser
+}
+
+function mapApiUser(user: ApiUser): AuthUser {
+  return {
+    id: user.id,
+    email: user.email,
+    profile: {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      isActive: user.isActive,
+      permissions: user.permissions,
+    },
+  }
+}
 
 export function getStoredToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -33,13 +62,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export async function signIn(email: string, password: string): Promise<AuthSession> {
-  const result = await request<AuthSession>('/auth/login', {
+  const result = await request<ApiAuthResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
   storeToken(result.token)
   notifyAuthChanged()
-  return result
+  return { token: result.token, user: mapApiUser(result.user) }
 }
 
 export async function signOut() {
@@ -50,8 +79,8 @@ export async function signOut() {
 export async function loadAuthUser(): Promise<AuthUser | null> {
   if (!getStoredToken()) return null
   try {
-    const result = await request<{ user: AuthUser }>('/auth/me')
-    return result.user
+    const result = await request<{ user: ApiUser }>('/auth/me')
+    return mapApiUser(result.user)
   } catch {
     clearStoredToken()
     return null
