@@ -14,18 +14,29 @@ A mobile-first, installable PWA for simple business management. The system is de
 
 ## Application areas
 1. Dashboard
-2. Sales and invoices
-3. Purchases and expenses
-4. Stock
-5. Labour
-6. Bills and recurring expenses
-7. History / audit
-8. Users and business settings (owner only)
+2. Customers
+3. Products / brick types
+4. Sales and invoices
+5. Purchases and expenses
+6. Stock
+7. Labour
+8. Bills and recurring expenses
+9. History / audit
+10. Users and business settings (owner only)
 
 ## Current data areas
 - `users`: owner and partner accounts.
 - `audit_events`: immutable activity records.
 - `business_settings`: one business profile document identified by `_id: "business"`.
+- `customers`: customer records with contact details, optional GST number, active status and timestamps.
+
+## Customers
+Customers are available to authenticated owners and partners through `/api/customers`.
+- Anyone signed in can view customers.
+- Owners and partners can create and edit customers.
+- Customers are soft-disabled with `isActive: false` rather than deleted.
+- Customer create/update actions are recorded in the audit log.
+- The frontend keeps the workflow simple: add, edit, enable/disable, and view.
 
 ## Business settings
 The owner can maintain the business name, phone number, address, optional GST number, and currency. Currency is currently fixed to INR so future financial modules have a clear default. Settings are served by `/api/settings` and protected by the existing authentication and owner authorization rules.
@@ -44,10 +55,9 @@ The owner can maintain the business name, phone number, address, optional GST nu
 ## Project structure
 ```text
 src/
-  app/          Application shell, routing, providers
+  app/          Application shell and screens
   components/   Shared UI components
-  features/     Business features grouped by domain
-  lib/          Frontend infrastructure and shared helpers
+  lib/          Frontend API helpers and shared infrastructure
   types/        Shared TypeScript types
 server/
   src/          Express API, MongoDB connection, auth, middleware and routes

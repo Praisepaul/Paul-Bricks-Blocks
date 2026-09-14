@@ -15,16 +15,17 @@
 - MERN frontend-to-API authentication wiring.
 - Owner user management and Partner accounts.
 - Owner-only business settings for business name, phone, address, optional GST number and INR currency.
+- Customers: list, add, edit, enable/disable, MongoDB persistence and audit events.
 - Supabase foundation removed because it was not merged.
 
 ## Current branch
 `main`
 
-## Next phase
-Build the first real business module: customers, products, sales, sale line items, payments and invoice-number foundation, with backend-enforced owner/partner permissions and audit events.
+## Next module
+Build Products / Brick Types so sales can connect a customer to a real product, quantity and price.
 
 ## Planned phases
-1. Foundation: authentication, users, RBAC, database, business settings, dashboard, audit framework.
+1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
 2. Money: sales, invoices, purchases, expenses, payments, customers/suppliers.
 3. Documents: invoice/PDF, print, Android sharing, attachments.
 4. Stock.
