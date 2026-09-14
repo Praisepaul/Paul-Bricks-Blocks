@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../components/Button'
+import { signIn, signOut } from '../lib/auth/auth'
+import { useAuth } from '../lib/auth/AuthProvider'
 
 type Section = 'dashboard' | 'sales' | 'purchases' | 'labour' | 'bills' | 'history'
 
@@ -13,7 +15,19 @@ const sections: Array<{ id: Section; label: string }> = [
 ]
 
 export function App() {
+  const { loading, configured, session, user } = useAuth()
+
+  if (!configured) return <ConfigurationNotice />
+  if (loading) return <LoadingScreen />
+  if (!session) return <SignInScreen />
+  if (!user?.profile?.isActive) return <InactiveAccount />
+
+  return <AuthenticatedApp roleLabel={user.profile.role === 'owner' ? 'Owner' : 'Partner'} />
+}
+
+function AuthenticatedApp({ roleLabel }: { roleLabel: string }) {
   const [activeSection, setActiveSection] = useState<Section>('dashboard')
+  const { user } = useAuth()
 
   return (
     <div className="app-shell">
@@ -22,11 +36,15 @@ export function App() {
           <p className="eyebrow">Paul Bricks & Blocks</p>
           <h1>{getSectionTitle(activeSection)}</h1>
         </div>
-        <div className="user-badge" aria-label="Current user role">Owner</div>
+        <div className="user-badge" aria-label="Current user role">{roleLabel}</div>
       </header>
 
       <main className="page-content">
         {activeSection === 'dashboard' ? <Dashboard /> : <Placeholder section={activeSection} />}
+        <div className="account-strip">
+          <span>{user?.email ?? 'Signed in'}</span>
+          <Button variant="secondary" onClick={() => void signOut()}>Sign out</Button>
+        </div>
       </main>
 
       <nav className="bottom-nav" aria-label="Main navigation">
@@ -44,6 +62,55 @@ export function App() {
   )
 }
 
+function SignInScreen() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+    setBusy(true)
+    try {
+      const { error: signInError } = await signIn(email.trim(), password)
+      if (signInError) setError(signInError.message)
+    } catch (signInError) {
+      setError(signInError instanceof Error ? signInError.message : 'Unable to sign in.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <main className="auth-screen">
+      <section className="auth-card">
+        <p className="eyebrow">Paul Bricks & Blocks</p>
+        <h1>Sign in</h1>
+        <p>Use your business account to continue.</p>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <label>Email<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+          <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+          {error && <p className="error-text" role="alert">{error}</p>}
+          <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+        </form>
+      </section>
+    </main>
+  )
+}
+
+function ConfigurationNotice() {
+  return <main className="auth-screen"><section className="auth-card"><p className="eyebrow">Setup needed</p><h1>Connect the business account</h1><p>Supabase is not configured yet. Add the local Vite Supabase environment values, then restart the development server.</p></section></main>
+}
+
+function LoadingScreen() {
+  return <main className="auth-screen"><section className="auth-card"><p>Loading your account…</p></section></main>
+}
+
+function InactiveAccount() {
+  return <main className="auth-screen"><section className="auth-card"><p className="eyebrow">Account unavailable</p><h1>Contact the owner</h1><p>This account is currently inactive.</p></section></main>
+}
+
 function Dashboard() {
   return (
     <>
@@ -57,7 +124,6 @@ function Dashboard() {
           <Button variant="secondary">+ Add Labour</Button>
         </div>
       </section>
-
       <section className="summary-grid" aria-label="Business summary">
         <SummaryCard label="Today's Sales" value="₹0" />
         <SummaryCard label="Today's Expenses" value="₹0" />
@@ -68,22 +134,11 @@ function Dashboard() {
 }
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <article className="summary-card">
-      <p>{label}</p>
-      <strong>{value}</strong>
-    </article>
-  )
+  return <article className="summary-card"><p>{label}</p><strong>{value}</strong></article>
 }
 
 function Placeholder({ section }: { section: Section }) {
-  return (
-    <section className="empty-state">
-      <p className="eyebrow">Foundation</p>
-      <h2>{getSectionTitle(section)}</h2>
-      <p>This section will be built in the next business phase.</p>
-    </section>
-  )
+  return <section className="empty-state"><p className="eyebrow">Foundation</p><h2>{getSectionTitle(section)}</h2><p>This section will be built in the next business phase.</p></section>
 }
 
 function getSectionTitle(section: Section) {
