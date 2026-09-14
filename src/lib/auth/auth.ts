@@ -21,7 +21,6 @@ export async function signOut() {
 
 export async function loadAuthUser(): Promise<AuthUser | null> {
   if (!supabase) return null
-
   const { data: sessionData } = await supabase.auth.getSession()
   const user = sessionData.session?.user
   if (!user) return null
@@ -39,7 +38,7 @@ export async function loadAuthUser(): Promise<AuthUser | null> {
       ? ({
           id: profile.id,
           fullName: profile.full_name,
-          role: profile.role,
+          role: profile.role as UserProfile['role'],
           isActive: profile.is_active,
         } satisfies UserProfile)
       : null,
