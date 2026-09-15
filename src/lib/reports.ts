@@ -3,6 +3,7 @@ export interface ReportSummary {
   sales: { subtotal: number; gst: number; total: number; count: number }
   purchases: { subtotal: number; total: number; count: number; inputGst: number; inputGstCaptured: boolean }
   expenses: { total: number; count: number }; labour: { total: number; count: number }; unpaidBills: { total: number; count: number }
+  cogs: number; grossProfit: number; expensesAndLabour: number; operatingProfit: number; closingStockValue: number
   operatingOutflow: number; cashMovementBeforeStockAndTax: number; gstDifference: number; stockNote: string; gstNote: string
 }
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
