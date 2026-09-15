@@ -27,28 +27,23 @@
 - Purchase GST/input tax capture: supplier state, purchase GST rate, CGST/SGST or IGST calculation, stored tax breakdown, and report aggregation.
 - Weighted-average stock valuation and COGS calculation from purchase, sale and stock-movement history.
 - Reports now show COGS, closing stock value, gross profit and operating profit.
-- Sales are now blocked when the requested quantity is greater than available stock.
+- Sales are blocked when the requested quantity is greater than available stock.
 - New opening/add-stock entries require an explicit cost per unit for reliable valuation.
+- Stock removal is now also blocked when the requested quantity is greater than available stock.
+- Stock screen shows the currently available quantity before a stock correction is saved.
 - Simple derived ledger foundation: sales, purchase, GST, COGS, expenses and labour are presented as debit/credit entries without requiring historical transactions to be re-entered.
 - Ledger page is available to both Owner and Partner users.
 - Customer receipts and supplier payments are recorded with payment method/date/reference and checked against outstanding balances.
 - Bill settlement now creates a payment record and marks the bill paid without creating a duplicate expense.
 - Ledger now includes customer receipts, supplier payments and bill settlements.
 - Payments page is available to both Owner and Partner users.
-- Customer and supplier Accounts page now shows transaction statements with running outstanding/payable balances.
+- Customer and supplier account statements show transaction history, payments and running balances.
 
 ## Current branch
 `main`
 
 ## Current module
-**Customer & supplier account statements** — ready for local verification.
-
-## Account statement design boundary
-- Customer statements derive sales and customer receipts into a simple running receivable balance.
-- Supplier statements derive purchases and supplier payments into a simple running payable balance.
-- Supplier identity currently uses supplier name because purchases do not yet have a supplier master record.
-- Statements are read-only views over existing transactions; they do not duplicate or alter the original sale, purchase or payment records.
-- This is an account-detail foundation, not a complete reconciliation, bank matching or statutory accounting system.
+**Stock integrity** — ready for local verification.
 
 ## Payment design boundary
 - Customer receipts reduce Sales Receivable; they do not create another sale.
@@ -85,12 +80,12 @@
 - Gross profit is sales before GST minus COGS.
 - Operating profit is gross profit minus expenses and labour.
 - New added stock requires an explicit unit cost; stock removal consumes the current average cost.
-- Sales cannot reduce stock below zero.
+- Sales and stock removals cannot reduce stock below zero.
 - Reports still do not claim GST filing liability.
 - Bills remain obligations until settled, and settlement is recorded separately from the original bill amount.
 
 ## Next module
-Verify customer and supplier account statements locally. Then add reconciliation features only if the real workflow needs them.
+Verify stock integrity locally. Then improve purchase documents and account statement print/share workflows.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
