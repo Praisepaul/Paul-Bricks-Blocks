@@ -1,0 +1,30 @@
+import { useEffect, useState } from 'react'
+import { Button } from '../components/Button'
+import { listLedger, type LedgerEntry, type LedgerType } from '../lib/ledger'
+
+const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 })
+const labels: Record<LedgerType, string> = { sale: 'Sale', purchase: 'Purchase', expense: 'Expense', labour: 'Labour', stock: 'Stock' }
+
+export function Ledger() {
+  const [entries, setEntries] = useState<LedgerEntry[]>([])
+  const [filter, setFilter] = useState<'all' | LedgerType>('all')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  async function load() {
+    setLoading(true); setError('')
+    try { setEntries(await listLedger()) } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to load ledger.') } finally { setLoading(false) }
+  }
+  useEffect(() => { void load() }, [])
+  const visible = filter === 'all' ? entries : entries.filter((entry) => entry.type === filter)
+
+  return <div className="history-page">
+    <section className="page-heading"><p className="eyebrow">Accounting foundation</p><h2>Ledger</h2><p>See where each business transaction is recorded. Bills stay separate until payment is handled.</p></section>
+    <section className="form-card"><div className="history-filters">{(['all', 'sale', 'purchase', 'expense', 'labour'] as const).map((value) => <Button key={value} variant={filter === value ? 'active' : 'secondary'} onClick={() => setFilter(value)}>{value === 'all' ? 'All' : labels[value]}</Button>)}</div></section>
+    <section className="user-list"><div className="list-heading"><h3>Ledger entries</h3><Button variant="secondary" onClick={() => void load()} disabled={loading}>Refresh</Button></div>
+      {error && <p className="error-text" role="alert">{error}</p>}
+      {loading ? <p>Loading ledger…</p> : visible.length === 0 ? <p>No ledger entries found.</p> : visible.map((entry) => <article className="user-row history-row" key={entry.id}><div><strong>{entry.description}</strong><span>{labels[entry.type]} · {entry.number} · {new Date(entry.date).toLocaleDateString('en-IN')} · Dr {entry.debitAccount} · Cr {entry.creditAccount}</span></div><div className="row-actions"><strong>{money.format(entry.amount)}</strong></div></article>)}
+    </section>
+    <section className="form-card"><p className="field-hint">This first ledger is derived from your existing sales, purchases, expenses and labour records, so no old transactions need to be re-entered.</p></section>
+  </div>
+}
