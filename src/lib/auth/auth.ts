@@ -1,3 +1,4 @@
+import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
 import type { AuthSession, AuthUser, UserRole } from '../../types/auth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
@@ -69,6 +70,28 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
   storeToken(result.token)
   notifyAuthChanged()
   return { token: result.token, user: mapApiUser(result.user) }
+}
+
+export async function signInWithPasskey(): Promise<AuthSession> {
+  const options = await request<Record<string, unknown>>('/auth/passkey/login/options')
+  const response = await startAuthentication({ optionsJSON: options })
+  const result = await request<ApiAuthResponse>('/auth/passkey/login/verify', {
+    method: 'POST',
+    body: JSON.stringify({ challenge: options.challenge, response }),
+  })
+  storeToken(result.token)
+  notifyAuthChanged()
+  return { token: result.token, user: mapApiUser(result.user) }
+}
+
+export async function registerPasskey(): Promise<string> {
+  const options = await request<Record<string, unknown>>('/auth/passkey/register/options')
+  const response = await startRegistration({ optionsJSON: options })
+  const result = await request<{ message: string }>('/auth/passkey/register/verify', {
+    method: 'POST',
+    body: JSON.stringify({ challenge: options.challenge, response }),
+  })
+  return result.message
 }
 
 export async function signOut() {
