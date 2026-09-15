@@ -1,0 +1,8 @@
+export interface Supplier { id: string; name: string; phone: string; address: string; gstNumber: string; state: string; isActive: boolean; createdAt: string; updatedAt: string }
+export interface SupplierInput { name: string; phone: string; address: string; gstNumber: string; state: string }
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> { const headers = new Headers(options.headers); headers.set('Content-Type', 'application/json'); const token = localStorage.getItem('pbb_auth_token'); if (token) headers.set('Authorization', `Bearer ${token}`); const response = await fetch(`${API_URL}${path}`, { ...options, headers }); const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error(body.message ?? 'Request failed'); return body as T }
+export async function listSuppliers(): Promise<Supplier[]> { return (await request<{ suppliers: Supplier[] }>('/suppliers')).suppliers }
+export async function createSupplier(input: SupplierInput): Promise<Supplier> { return (await request<{ supplier: Supplier }>('/suppliers', { method: 'POST', body: JSON.stringify(input) })).supplier }
+export async function updateSupplier(id: string, input: SupplierInput): Promise<Supplier> { return (await request<{ supplier: Supplier }>(`/suppliers/${id}`, { method: 'PUT', body: JSON.stringify(input) })).supplier }
+export async function setSupplierStatus(id: string, isActive: boolean): Promise<Supplier> { return (await request<{ supplier: Supplier }>(`/suppliers/${id}/status`, { method: 'PUT', body: JSON.stringify({ isActive }) })).supplier }
