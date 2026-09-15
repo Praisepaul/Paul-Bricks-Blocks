@@ -25,22 +25,24 @@
 - Expense creation audit events and MongoDB indexes.
 - Labour: worker + optional work description + amount + business date + generated labour number + recent labour payments list.
 - Labour creation audit events and MongoDB indexes.
+- Bills: bill name + category + amount + bill date + optional due date/notes + generated bill number + unpaid/paid status + mark-paid action.
+- Bill creation and payment-status audit events and MongoDB indexes.
 
 ## Current branch
 `main`
 
 ## Current module
-**Labour** — ready for local verification.
+**Bills / recurring expenses** — ready for local verification.
 
-## Labour scope in this first version
-- Owners and partners can create labour payment records.
-- Worker name and amount are required; work description is optional.
-- Labour date is stored separately from the system creation timestamp.
-- Labour numbers are generated automatically as `LAB-YYYYMMDD-XXXXXX`.
-- Labour records are payment records only; attendance, worker master records, advances, daily-rate calculations and reports are intentionally not included yet.
+## Bills scope in this first version
+- Owners and partners can create and view bills.
+- Bill name, category, amount and bill date are required; due date and notes are optional.
+- Bills are unpaid by default and can be marked paid with today's business date.
+- Bill numbers are generated automatically as `BILL-YYYYMMDD-XXXXXX`.
+- Bills are a simple obligation/recurring-cost register. Marking a bill paid does not yet create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-After Labour is verified, improve **Bills / recurring expenses** and then build **History + dashboard totals**. Stock will be designed from verified Sales + Purchases transactions rather than adding stock quantity to Products.
+After Bills is verified, build **History + dashboard totals**. Stock will then be designed from verified Sales + Purchases transactions rather than adding stock quantity to Products.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
