@@ -4,105 +4,11 @@ import { getDb } from '../db.js'
 import { recordAuditEvent } from '../audit.js'
 import { requireAuth, type AuthenticatedRequest } from '../middleware.js'
 
-export interface CustomerRecord {
-  _id: ObjectId
-  name: string
-  phone: string
-  address: string
-  gstNumber: string
-  isActive: boolean
-  createdAt: Date
-  updatedAt: Date
-}
-
+export interface CustomerRecord { _id: ObjectId; name: string; phone: string; address: string; state: string; gstNumber: string; isActive: boolean; createdAt: Date; updatedAt: Date }
 export const customersRouter = Router()
 customersRouter.use(requireAuth)
-
-function sanitizeCustomer(customer: CustomerRecord) {
-  return {
-    id: customer._id.toHexString(),
-    name: customer.name,
-    phone: customer.phone,
-    address: customer.address,
-    gstNumber: customer.gstNumber,
-    isActive: customer.isActive,
-    createdAt: customer.createdAt,
-    updatedAt: customer.updatedAt,
-  }
-}
-
-function readCustomerInput(body: unknown) {
-  const value = body as Record<string, unknown> | null
-  return {
-    name: typeof value?.name === 'string' ? value.name.trim() : '',
-    phone: typeof value?.phone === 'string' ? value.phone.trim() : '',
-    address: typeof value?.address === 'string' ? value.address.trim() : '',
-    gstNumber: typeof value?.gstNumber === 'string' ? value.gstNumber.trim().toUpperCase() : '',
-  }
-}
-
-customersRouter.get('/', async (_req: AuthenticatedRequest, res) => {
-  const customers = await getDb()
-    .collection<CustomerRecord>('customers')
-    .find({})
-    .sort({ isActive: -1, name: 1 })
-    .toArray()
-
-  return res.json({ customers: customers.map(sanitizeCustomer) })
-})
-
-customersRouter.post('/', async (req: AuthenticatedRequest, res) => {
-  const input = readCustomerInput(req.body)
-  if (!input.name) return res.status(400).json({ message: 'Customer name is required' })
-
-  const now = new Date()
-  const customer: CustomerRecord = {
-    _id: new ObjectId(),
-    ...input,
-    isActive: true,
-    createdAt: now,
-    updatedAt: now,
-  }
-
-  await getDb().collection<CustomerRecord>('customers').insertOne(customer)
-  await recordAuditEvent({
-    actorUserId: req.user!._id,
-    actorRole: req.user!.role,
-    action: 'create',
-    entity: 'customer',
-    entityId: customer._id.toHexString(),
-    details: { name: customer.name },
-  })
-
-  return res.status(201).json({ customer: sanitizeCustomer(customer) })
-})
-
-customersRouter.put('/:id', async (req: AuthenticatedRequest, res) => {
-  if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid customer id' })
-
-  const customerId = new ObjectId(req.params.id)
-  const existing = await getDb().collection<CustomerRecord>('customers').findOne({ _id: customerId })
-  if (!existing) return res.status(404).json({ message: 'Customer not found' })
-
-  const input = readCustomerInput(req.body)
-  if (!input.name) return res.status(400).json({ message: 'Customer name is required' })
-
-  const isActive = typeof req.body?.isActive === 'boolean' ? req.body.isActive : existing.isActive
-  const updatedAt = new Date()
-  await getDb().collection<CustomerRecord>('customers').updateOne(
-    { _id: customerId },
-    { $set: { ...input, isActive, updatedAt } },
-  )
-
-  const customer = { ...existing, ...input, isActive, updatedAt }
-  await recordAuditEvent({
-    actorUserId: req.user!._id,
-    actorRole: req.user!.role,
-    action: 'update',
-    entity: 'customer',
-    entityId: customerId.toHexString(),
-    details: { name: customer.name, isActive },
-  })
-
-  return res.json({ customer: sanitizeCustomer(customer) })
-})
+function sanitizeCustomer(customer: CustomerRecord) { return { id: customer._id.toHexString(), name: customer.name, phone: customer.phone, address: customer.address, state: customer.state ?? '', gstNumber: customer.gstNumber, isActive: customer.isActive, createdAt: customer.createdAt, updatedAt: customer.updatedAt } }
+function readCustomerInput(body: unknown) { const value = body as Record<string, unknown> | null; return { name: typeof value?.name === 'string' ? value.name.trim() : '', phone: typeof value?.phone === 'string' ? value.phone.trim() : '', address: typeof value?.address === 'string' ? value.address.trim() : '', state: typeof value?.state === 'string' ? value.state.trim() : '', gstNumber: typeof value?.gstNumber === 'string' ? value.gstNumber.trim().toUpperCase() : '' } }
+customersRouter.get('/', async (_req: AuthenticatedRequest, res) => { const customers = await getDb().collection<CustomerRecord>('customers').find({}).sort({ isActive: -1, name: 1 }).toArray(); return res.json({ customers: customers.map(sanitizeCustomer) }) })
+customersRouter.post('/', async (req: AuthenticatedRequest, res) => { const input = readCustomerInput(req.body); if (!input.name) return res.status(400).json({ message: 'Customer name is required' }); const now = new Date(); const customer: CustomerRecord = { _id: new ObjectId(), ...input, isActive: true, createdAt: now, updatedAt: now }; await getDb().collection<CustomerRecord>('customers').insertOne(customer); await recordAuditEvent({ actorUserId: req.user!._id, actorRole: req.user!.role, action: 'create', entity: 'customer', entityId: customer._id.toHexString(), details: { name: customer.name } }); return res.status(201).json({ customer: sanitizeCustomer(customer) }) })
+customersRouter.put('/:id', async (req: AuthenticatedRequest, res) => { if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid customer id' }); const customerId = new ObjectId(req.params.id); const existing = await getDb().collection<CustomerRecord>('customers').findOne({ _id: customerId }); if (!existing) return res.status(404).json({ message: 'Customer not found' }); const input = readCustomerInput(req.body); if (!input.name) return res.status(400).json({ message: 'Customer name is required' }); const isActive = typeof req.body?.isActive === 'boolean' ? req.body.isActive : existing.isActive; const updatedAt = new Date(); await getDb().collection<CustomerRecord>('customers').updateOne({ _id: customerId }, { $set: { ...input, isActive, updatedAt } }); const customer = { ...existing, ...input, isActive, updatedAt }; await recordAuditEvent({ actorUserId: req.user!._id, actorRole: req.user!.role, action: 'update', entity: 'customer', entityId: customerId.toHexString(), details: { name: customer.name, isActive } }); return res.json({ customer: sanitizeCustomer(customer) }) })
