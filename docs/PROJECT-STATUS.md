@@ -23,12 +23,13 @@
 - Invoice sharing through native device sharing with clipboard fallback.
 - GST foundation: business state, customer state, business default GST rate, GST-aware sales, and invoice CGST/SGST or IGST breakdown when state data is available.
 - Accounting foundation: dashboard sales-before-GST, GST collected, purchases, and expenses/labour transaction snapshot.
+- Reports: Today, 7 days, this month, and custom date-range summaries for sales, purchases, expenses, labour, GST collected and unpaid bills.
 
 ## Current branch
 `main`
 
 ## Current module
-**GST + accounting foundation** — ready for local verification.
+**Reports + accounting period view** — ready for local verification.
 
 ## GST design boundary
 - GST rate is explicitly selected on each sale, starting from the business default rate.
@@ -36,16 +37,18 @@
 - Same-state business/customer with GST rate > 0 produces CGST + SGST.
 - Different or unavailable state information produces IGST when a GST rate is applied.
 - Existing historical sales remain valid; records created before GST fields existed are treated as zero-tax for reporting compatibility.
+- Purchase GST/input tax credit is deliberately not guessed yet because purchase tax details are not currently captured.
 - This is a calculation/invoice foundation, not a claim that the application is a complete GST-compliance or filing system.
 
 ## Accounting design boundary
-- The dashboard provides transaction-level accounting snapshots.
-- It deliberately does **not** calculate accounting profit, COGS, receivables, payables, or GST filing liability yet.
+- Reports use explicit transaction periods rather than pretending that the dashboard is a full ledger.
+- Sales, purchases, expenses and labour are shown separately and as a simple transaction-level cash movement snapshot.
+- It deliberately does **not** calculate final accounting profit, COGS, receivables, payables, or GST filing liability yet.
 - Stock valuation and formal books should be added before presenting a number as final profit.
 - Bills remain obligations; marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-Verify GST calculations and invoice output locally. Then build a proper transaction/report period view before adding advanced GST filing features.
+Verify the new Reports screen locally. Then improve accounting data capture for purchases (GST/input tax) and build the formal ledger/COGS foundation before adding GST filing workflows.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
