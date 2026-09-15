@@ -10,19 +10,19 @@
   },
   "dependencies": {
     "@simplewebauthn/server": "^14.0.0",
+    "@types/node": "^26.5.1",
     "bcryptjs": "latest",
     "cors": "latest",
     "dotenv": "^17.4.2",
     "express": "latest",
     "jsonwebtoken": "latest",
-    "mongodb": "latest"
+    "mongodb": "latest",
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
     "@types/cors": "latest",
     "@types/express": "latest",
     "@types/jsonwebtoken": "latest",
-    "@types/node": "^26.5.1",
-    "tsx": "latest",
-    "typescript": "^7.0.2"
+    "tsx": "latest"
   }
 }
