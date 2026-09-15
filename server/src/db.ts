@@ -17,6 +17,9 @@ export async function connectDb(): Promise<Db> {
     db.collection('payments').createIndex({ paymentDate: -1, createdAt: -1 }), db.collection('payments').createIndex({ kind: 1, customerId: 1, createdAt: -1 }), db.collection('payments').createIndex({ kind: 1, supplierId: 1, createdAt: -1 }), db.collection('payments').createIndex({ kind: 1, supplierName: 1, createdAt: -1 }),
     db.collection('stock_movements').createIndex({ productId: 1, createdAt: -1 }),
     db.collection('attachments.files').createIndex({ 'metadata.entityType': 1, 'metadata.entityId': 1, uploadDate: -1 }),
+    db.collection('passkeys').createIndex({ credentialId: 1 }, { unique: true }),
+    db.collection('passkeys').createIndex({ userId: 1, createdAt: -1 }),
+    db.collection('webauthn_challenges').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ])
   return db
 }
