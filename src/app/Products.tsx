@@ -1,60 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
+import { FormSheet } from '../components/FormSheet'
 import { createProduct, listProducts, updateProduct, type Product } from '../lib/products'
 
 const emptyForm = { name: '', unit: 'piece', sellingPrice: '', purchasePrice: '' }
 type ProductForm = typeof emptyForm
-
 export function Products() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [form, setForm] = useState<ProductForm>(emptyForm)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-
-  async function loadProducts() {
-    setLoading(true); setError('')
-    try { setProducts(await listProducts()) }
-    catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to load products.') }
-    finally { setLoading(false) }
-  }
+  const [products, setProducts] = useState<Product[]>([]); const [form, setForm] = useState<ProductForm>(emptyForm); const [editingId, setEditingId] = useState<string | null>(null); const [formOpen, setFormOpen] = useState(false); const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [success, setSuccess] = useState('')
+  async function loadProducts() { setLoading(true); setError(''); try { setProducts(await listProducts()) } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to load products.') } finally { setLoading(false) } }
   useEffect(() => { void loadProducts() }, [])
-  function resetForm() { setForm(emptyForm); setEditingId(null); setError('') }
-  function startEditing(product: Product) {
-    setEditingId(product.id); setForm({ name: product.name, unit: product.unit, sellingPrice: String(product.sellingPrice), purchasePrice: String(product.purchasePrice) }); setSuccess(''); setError(''); window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setError(''); setSuccess(''); setBusy(true)
-    try {
-      const input = { name: form.name, unit: form.unit, sellingPrice: Number(form.sellingPrice), purchasePrice: Number(form.purchasePrice) }
-      if (editingId) { await updateProduct(editingId, input); setSuccess('Product details updated.') }
-      else { await createProduct(input); setSuccess('Product added.') }
-      resetForm(); await loadProducts()
-    } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to save product.') }
-    finally { setBusy(false) }
-  }
-  async function toggleProduct(product: Product) {
-    setError(''); setSuccess(''); setBusy(true)
-    try { await updateProduct(product.id, { name: product.name, unit: product.unit, sellingPrice: product.sellingPrice, purchasePrice: product.purchasePrice, isActive: !product.isActive }); setSuccess(product.isActive ? 'Product marked inactive.' : 'Product marked active.'); await loadProducts() }
-    catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to update product.') }
-    finally { setBusy(false) }
-  }
-  return <div className="products-page">
-    <section className="page-heading"><p className="eyebrow">Business</p><h2>Products</h2><p>Set up the bricks and blocks you sell.</p></section>
-    <section className="form-card"><h3>{editingId ? 'Edit product' : 'Add product'}</h3>
-      <form className="customer-form" onSubmit={handleSubmit}>
-        <label>Product name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required autoFocus={!editingId} placeholder="Example: 4 inch red brick" /></label>
-        <label>Unit<select value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })}><option value="piece">Piece</option><option value="1000 pieces">1000 Pieces</option><option value="load">Load</option><option value="bag">Bag</option><option value="sq ft">Sq Ft</option></select></label>
-        <label>Selling price (₹)<input type="number" min="0" step="0.01" value={form.sellingPrice} onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })} required /></label>
-        <label>Purchase price (₹)<span className="field-hint"> Optional for now</span><input type="number" min="0" step="0.01" value={form.purchasePrice} onChange={(event) => setForm({ ...form, purchasePrice: event.target.value })} required /></label>
-        {error && <p className="error-text" role="alert">{error}</p>}{success && <p className="success-text" role="status">{success}</p>}
-        <div className="form-actions"><Button variant="primary" type="submit" disabled={busy}>{busy ? 'Saving…' : editingId ? 'Save changes' : 'Add product'}</Button>{editingId && <Button variant="secondary" type="button" onClick={resetForm} disabled={busy}>Cancel</Button>}</div>
-      </form>
-    </section>
-    <section className="user-list customer-list"><div className="list-heading"><h3>Product list</h3><span className="field-hint">{products.length} total</span></div>
-      {loading ? <p className="field-hint">Loading products…</p> : products.length === 0 ? <p className="field-hint">No products yet. Add your first product above.</p> : products.map((product) => <article className="user-row customer-row" key={product.id}><div><strong>{product.name}</strong><span>Sell ₹{product.sellingPrice.toFixed(2)} / {product.unit}</span><span>Purchase ₹{product.purchasePrice.toFixed(2)} / {product.unit}</span></div><div className="row-actions"><span className="status-badge">{product.isActive ? 'Active' : 'Inactive'}</span><Button variant="secondary" type="button" onClick={() => startEditing(product)} disabled={busy}>Edit</Button><Button variant="secondary" type="button" onClick={() => void toggleProduct(product)} disabled={busy}>{product.isActive ? 'Disable' : 'Enable'}</Button></div></article>)}
-    </section>
-  </div>
+  function resetForm() { setForm(emptyForm); setEditingId(null); setFormOpen(false); setError('') }
+  function openNew() { setForm(emptyForm); setEditingId(null); setError(''); setSuccess(''); setFormOpen(true) }
+  function startEditing(product: Product) { setEditingId(product.id); setForm({ name: product.name, unit: product.unit, sellingPrice: String(product.sellingPrice), purchasePrice: String(product.purchasePrice) }); setSuccess(''); setError(''); setFormOpen(true) }
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setError(''); setSuccess(''); setBusy(true); try { const input = { name: form.name, unit: form.unit, sellingPrice: Number(form.sellingPrice), purchasePrice: Number(form.purchasePrice) }; if (editingId) { await updateProduct(editingId, input); setSuccess('Product details updated.') } else { await createProduct(input); setSuccess('Product added.') }; resetForm(); await loadProducts() } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to save product.') } finally { setBusy(false) } }
+  async function toggleProduct(product: Product) { setError(''); setSuccess(''); setBusy(true); try { await updateProduct(product.id, { name: product.name, unit: product.unit, sellingPrice: product.sellingPrice, purchasePrice: product.purchasePrice, isActive: !product.isActive }); setSuccess(product.isActive ? 'Product marked inactive.' : 'Product marked active.'); await loadProducts() } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to update product.') } finally { setBusy(false) } }
+  return <div className="products-page"><section className="page-heading"><div><p className="eyebrow">Business</p><h2>Products</h2><p>Set up the bricks and blocks you sell.</p></div><Button variant="primary" onClick={openNew}>+ Add product</Button></section>{error && <p className="error-text" role="alert">{error}</p>}{success && <p className="success-text" role="status">{success}</p>}<section className="user-list customer-list"><div className="list-heading"><div><h3>Product list</h3><span className="field-hint">{products.length} total</span></div><Button variant="secondary" onClick={() => void loadProducts()} disabled={loading}>Refresh</Button></div>{loading ? <p className="field-hint">Loading products…</p> : products.length === 0 ? <div className="empty-inline"><p className="field-hint">No products yet.</p><Button variant="primary" onClick={openNew}>Add your first product</Button></div> : products.map((product) => <article className="user-row customer-row" key={product.id}><div><strong>{product.name}</strong><span>Sell ₹{product.sellingPrice.toFixed(2)} / {product.unit}</span><span>Purchase ₹{product.purchasePrice.toFixed(2)} / {product.unit}</span></div><div className="row-actions"><span className="status-badge">{product.isActive ? 'Active' : 'Inactive'}</span><Button variant="secondary" type="button" onClick={() => startEditing(product)} disabled={busy}>Edit</Button><Button variant="secondary" type="button" onClick={() => void toggleProduct(product)} disabled={busy}>{product.isActive ? 'Disable' : 'Enable'}</Button></div></article>)}</section>{formOpen && <FormSheet title={editingId ? 'Edit product' : 'Add product'} onClose={() => !busy && resetForm()}><form className="customer-form" onSubmit={handleSubmit}><label>Product name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required autoFocus placeholder="Example: 4 inch red brick" /></label><label>Unit<select value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })}><option value="piece">Piece</option><option value="1000 pieces">1000 Pieces</option><option value="load">Load</option><option value="bag">Bag</option><option value="sq ft">Sq Ft</option></select></label><label>Selling price (₹)<input type="number" min="0" step="0.01" value={form.sellingPrice} onChange={(event) => setForm({ ...form, sellingPrice: event.target.value })} required /></label><label>Purchase price (₹)<span className="field-hint"> Optional for now</span><input type="number" min="0" step="0.01" value={form.purchasePrice} onChange={(event) => setForm({ ...form, purchasePrice: event.target.value })} required /></label>{error && <p className="error-text" role="alert">{error}</p>}<div className="form-actions"><Button variant="primary" type="submit" disabled={busy}>{busy ? 'Saving…' : editingId ? 'Save changes' : 'Add product'}</Button></div></form></FormSheet>}</div>
 }
