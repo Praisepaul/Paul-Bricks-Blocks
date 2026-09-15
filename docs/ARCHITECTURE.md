@@ -11,39 +11,59 @@ A mobile-first, installable PWA for simple business management. The system is de
 - Authentication: JWT issued by the Node API
 - Password hashing: bcryptjs
 - Authorization: role-based access enforced by the Node API
+- Document storage: MongoDB GridFS
 
 ## Application areas
-1. Dashboard
+1. Dashboard with quick actions
 2. Customers
-3. Products / brick types
-4. Sales and invoices
-5. Purchases and expenses
-6. Stock
-7. Labour
-8. Bills and recurring expenses
-9. History / audit
-10. Users and business settings (owner only)
+3. Suppliers
+4. Products / brick types
+5. Sales and invoices
+6. Purchases and expenses
+7. Stock
+8. Labour
+9. Bills and payments
+10. Documents / attachments
+11. History / audit
+12. Users and business settings (owner only)
 
 ## Current data areas
 - `users`: owner and partner accounts.
 - `audit_events`: immutable activity records.
 - `business_settings`: one business profile document identified by `_id: "business"`.
 - `customers`: customer master records with contact details, optional GST number, active status and timestamps.
+- `suppliers`: supplier master records with name, contact details, GSTIN, state and active status.
 - `products`: product/brick-type master records with unit, selling price, purchase price and active status.
 - `sales`: completed sales with generated invoice number, customer/product snapshots, quantity, sale price, total and creator.
-- `purchases`: purchase records with generated purchase number, supplier name, product snapshot, quantity, purchase price, total and creator.
+- `purchases`: purchase records with generated purchase number, supplier ID/name/state snapshots, product snapshot, quantity, purchase price, total and creator.
 - `expenses`: business expense records with generated expense number, category, optional description, amount, business date and creator.
 - `labour`: worker payment records with generated labour number, worker name, optional work description, amount, business date and creator.
 - `bills`: bill records with generated bill number, title, category, amount, bill date, optional due date, paid status/date, optional notes and creator.
+- `payments`: customer receipts, supplier payments and bill settlements.
 - `stock_movements`: manual opening-stock and stock-correction entries. Purchase and sale quantities are read directly from their transaction records when calculating current stock.
+- `attachments.files` / `attachments.chunks`: MongoDB GridFS storage for business documents and images. File metadata links each attachment to an application record.
 
 ## Authentication and permissions
 - Owner: full business administration, including users and settings.
-- Partner: day-to-day business operations such as customers, products, sales, purchases, expenses, labour, bills and stock.
+- Partner: day-to-day business operations such as customers, suppliers, products, sales, purchases, expenses, labour, bills, payments and stock.
 - Backend authorization is authoritative; frontend visibility is only a usability feature.
+- Documents use the same authenticated business boundary. Any active user can view attachments; deletion is limited to the owner or the user who uploaded the attachment.
+
+## Quick actions / usability
+The Home screen provides one-tap navigation to the most common tasks: new sale, purchase, customer, supplier, product, stock, expense, labour, bill and document attachment.
+- Quick actions only change the active screen; existing forms remain the single source of truth for saving records.
+- No duplicate quick-add API is introduced, which keeps business rules centralized in the existing modules.
+- The goal is minimum typing and obvious actions rather than a complex workflow engine.
 
 ## Customers
 Authenticated owners and partners can create, view, edit and enable/disable customers through `/api/customers`. Customer records are not physically deleted because future sales may reference them. Customer create/update actions are recorded in the audit log.
+
+## Suppliers
+Authenticated owners and partners can create, view, edit and enable/disable suppliers through `/api/suppliers`.
+- Supplier identity is a dedicated MongoDB record with name, phone, address, GSTIN, state and active status.
+- New purchases and supplier payments reference the supplier ID while retaining readable name/state snapshots.
+- Historical purchases/payments without supplier IDs remain valid and are matched by supplier name where needed.
+- Disabling a supplier prevents new purchases/payments from selecting it while preserving history.
 
 ## Products / brick types
 Authenticated owners and partners can create, view, edit and enable/disable products through `/api/products`. Each product has a name, selling unit, selling price and purchase price. Prices are stored as non-negative numbers in INR. Stock quantity is deliberately not part of this master record; stock is derived from transactions plus explicit stock movements.
@@ -55,19 +75,19 @@ Authenticated owners and partners can create and view sales through `/api/sales`
 - The server generates a unique invoice number in the form `INV-YYYYMMDD-XXXXXX`.
 - Customer name, product name and unit are snapshotted into the sale for stable historical display.
 - Total is calculated on the server and rounded to two decimal places.
-- Sales are informational money records, and their quantities are used by Stock as stock-out quantities.
+- Sales quantities are used by Stock as stock-out quantities.
 - Sale creation is recorded in `audit_events`.
 
 ## Purchases
 Authenticated owners and partners can create and view purchases through `/api/purchases`.
-- A purchase requires a supplier name, active product, positive quantity and non-negative unit price.
+- A purchase requires an active supplier when a supplier ID is supplied, active product, positive quantity and non-negative unit price.
 - The product's current purchase price is used to prefill the frontend, while the final purchase price is stored on the purchase for historical accuracy.
 - The server generates a unique purchase number in the form `PUR-YYYYMMDD-XXXXXX`.
 - Product name and unit are snapshotted into the purchase.
 - Total is calculated on the server and rounded to two decimal places.
 - Purchases record the money transaction, and their quantities are used by Stock as stock-in quantities.
 - Purchase creation is recorded in `audit_events`.
-- Supplier is currently stored as a required text snapshot. A dedicated supplier master can be added later when supplier management becomes useful.
+- Legacy purchases may remain name-based for compatibility.
 
 ## Stock
 Authenticated owners and partners can view current stock through `/api/stock` and record opening stock or corrections through `/api/stock/adjustments`.
@@ -75,9 +95,21 @@ Authenticated owners and partners can view current stock through `/api/stock` an
 - Current quantity is calculated as **all purchase quantity - all sale quantity + all manual stock movement quantity** for each product.
 - Manual stock movements are signed quantities: adding stock stores a positive quantity and removing stock stores a negative quantity.
 - Opening stock can only add quantity; corrections can add or remove quantity.
-- Every manual movement stores the product snapshot, reason, creator and creation time, and creates an audit event.
-- This design automatically includes existing sales and purchases and keeps the source transactions intact.
-- A later phase can add richer movement history, stock valuation, low-stock alerts and reports without changing the basic Product master.
+- Added stock stores an explicit unit cost so weighted-average valuation remains meaningful.
+- Sales and stock removals cannot reduce stock below zero.
+- The stock screen shows available quantity before a correction is saved.
+
+## Documents / attachments
+Authenticated owners and partners can manage business documents through `/api/attachments` and the Documents screen.
+- Supported record types are `customer`, `supplier`, `product`, `sale`, `purchase`, `expense` and `bill`.
+- Uploads use a simple JSON/base64 request from the browser and are stored in a MongoDB GridFS bucket named `attachments`.
+- GridFS metadata stores `entityType`, `entityId` and `uploadedByUserId` so the file remains linked to the exact business record.
+- Files are limited to 5 MB each to keep the simple upload path reliable.
+- The UI accepts common images, PDFs and office/text documents.
+- Authenticated users can open documents. Owners or the uploader can delete them.
+- Attachment create/delete operations are recorded in `audit_events`.
+- The Documents page is intentionally centralized instead of duplicating upload controls across every transaction screen.
+- This is document storage, not OCR, e-invoicing, automatic document classification or a full document-management suite.
 
 ## Expenses
 Authenticated owners and partners can create and view expenses through `/api/expenses`.
@@ -85,19 +117,17 @@ Authenticated owners and partners can create and view expenses through `/api/exp
 - Description is optional and is intended for a short note such as the reason for the expense.
 - The frontend offers simple starter categories: Electricity, Transport, Diesel, Repairs, Office, Rent and Other. The backend keeps category as text so the list can evolve without a migration.
 - The server generates a unique expense number in the form `EXP-YYYYMMDD-XXXXXX`.
-- The business date is stored separately from `createdAt`, so an expense can be recorded later for the day it actually happened.
+- The business date is stored separately from `createdAt`.
 - Amount is rounded to two decimal places on the server.
-- Expenses currently record the money transaction only; reports, payments, attachments and GST treatment will be added later.
 - Expense creation is recorded in `audit_events`.
 
 ## Labour
 Authenticated owners and partners can create and view labour payments through `/api/labour`.
 - A labour payment requires a worker name, positive amount and business date in `YYYY-MM-DD` format.
-- Work description is optional and is intended for a short note such as loading bricks, moulding blocks or delivery work.
+- Work description is optional.
 - The server generates a unique labour number in the form `LAB-YYYYMMDD-XXXXXX`.
-- The business date is stored separately from `createdAt`, so a payment can be recorded later for the day the work happened.
+- The business date is stored separately from `createdAt`.
 - Amount is rounded to two decimal places on the server.
-- Labour currently records the payment only; worker master records, attendance, daily-rate calculations, advances and reports will be added only when they are useful.
 - Labour creation is recorded in `audit_events`.
 
 ## Bills / recurring expenses
@@ -106,9 +136,7 @@ Authenticated owners and partners can create and view bills through `/api/bills`
 - Due date and notes are optional; due date cannot be before the bill date.
 - The server generates a unique bill number in the form `BILL-YYYYMMDD-XXXXXX`.
 - Bills default to unpaid and can be marked paid with a business paid date.
-- The frontend offers simple starter categories: Electricity, Water, Rent, Phone / Internet, Loan and Other.
-- Marking a bill paid changes the bill's status and records an audit event, but does not automatically create an expense or payment transaction. This avoids double-counting money until the payment/accounting model is designed.
-- Bills are a register of obligations/recurring costs; actual money-out transactions remain separate in Expenses for now.
+- Marking a bill paid records a payment settlement rather than creating a duplicate expense.
 
 ## Design principles
 - Mobile first.
@@ -119,7 +147,8 @@ Authenticated owners and partners can create and view bills through `/api/bills`
 - Important records use soft deletion where appropriate.
 - Audit events are immutable.
 - Keep financial calculations on the backend authoritative.
-- GST-ready data structures without prematurely implementing every GST rule.
+- Keep document storage centralized and reusable.
+- Defer advanced features that do not make daily data entry easier.
 
 ## Project structure
 ```text
