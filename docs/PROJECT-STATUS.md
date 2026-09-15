@@ -24,21 +24,22 @@
 - GST foundation: business state, customer state, business default GST rate, GST-aware sales, and invoice CGST/SGST or IGST breakdown when state data is available.
 - Accounting foundation: dashboard sales-before-GST, GST collected, purchases, and expenses/labour transaction snapshot.
 - Reports: Today, 7 days, this month, and custom date-range summaries for sales, purchases, expenses, labour, GST collected and unpaid bills.
+- Purchase GST/input tax capture: supplier state, purchase GST rate, CGST/SGST or IGST calculation, stored tax breakdown, and report aggregation.
 
 ## Current branch
 `main`
 
 ## Current module
-**Reports + accounting period view** — ready for local verification.
+**Purchase GST + input tax foundation** — ready for local verification.
 
 ## GST design boundary
-- GST rate is explicitly selected on each sale, starting from the business default rate.
+- GST rate is explicitly selected on each sale or purchase, starting from the business default rate.
 - Server calculates tax; the browser only previews it.
-- Same-state business/customer with GST rate > 0 produces CGST + SGST.
+- Same-state business/customer or business/supplier with GST rate > 0 produces CGST + SGST.
 - Different or unavailable state information produces IGST when a GST rate is applied.
-- Existing historical sales remain valid; records created before GST fields existed are treated as zero-tax for reporting compatibility.
-- Purchase GST/input tax credit is deliberately not guessed yet because purchase tax details are not currently captured.
-- This is a calculation/invoice foundation, not a claim that the application is a complete GST-compliance or filing system.
+- Existing historical sales and purchases remain valid; records created before GST fields existed are treated as zero-tax for reporting compatibility.
+- Reports show output GST minus captured purchase GST as an informational calculation only.
+- This is a calculation/accounting foundation, not a claim that the application is a complete GST-compliance or filing system.
 
 ## Accounting design boundary
 - Reports use explicit transaction periods rather than pretending that the dashboard is a full ledger.
@@ -48,7 +49,7 @@
 - Bills remain obligations; marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-Verify the new Reports screen locally. Then improve accounting data capture for purchases (GST/input tax) and build the formal ledger/COGS foundation before adding GST filing workflows.
+Verify purchase GST calculations and Reports locally. Then build the stock valuation/COGS foundation before presenting formal profit or GST filing workflows.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
