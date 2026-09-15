@@ -32,27 +32,31 @@
 - Stock: current stock calculated from all purchases minus all sales plus manual opening/correction movements.
 - Stock: opening stock and simple add/remove correction workflow with audit events.
 - Printable sales invoices using business settings, customer details and sale information.
+- Invoice sharing: native device share when supported, with clipboard fallback for easy WhatsApp/manual sharing.
 
 ## Current branch
 `main`
 
 ## Current module
-**Printable invoices** — ready for local verification.
+**Invoice sharing** — ready for local verification.
 
 ## Invoice scope
 - Each recent sale has a **Print invoice** action.
+- Each recent sale has a **Share invoice** action.
 - Invoice uses the existing generated invoice number.
 - Invoice shows business name, address, phone and GST number when configured.
 - Invoice shows current customer contact/address/GST details when available.
 - Invoice shows product, quantity, unit price and total.
 - Browser print is used deliberately for v1; the user can choose “Save as PDF” from the normal print dialog without adding a heavy PDF dependency yet.
+- Share uses the browser/device Web Share API when available.
+- When native sharing is unavailable, invoice details are copied to the clipboard for easy pasting into WhatsApp or another app.
 - Authenticated partners can read business settings because those settings are needed for invoice output; only owners can change them.
 
 ## Important accounting boundary
 Sales and purchases remain the source transactions for money and quantity. Stock is derived from their quantities plus explicit stock movements. Bills remain obligations and marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-After invoice printing is verified, continue with practical document usability such as a cleaner invoice/share flow before adding advanced GST or accounting complexity.
+Verify invoice sharing locally, then continue with practical document usability before adding advanced GST or accounting complexity.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
