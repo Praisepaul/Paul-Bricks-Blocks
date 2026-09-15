@@ -21,6 +21,9 @@ export async function connectDb(): Promise<Db> {
     db.collection('labour').createIndex({ labourNumber: 1 }, { unique: true }),
     db.collection('bills').createIndex({ isPaid: 1, dueDate: 1, createdAt: -1 }),
     db.collection('bills').createIndex({ billNumber: 1 }, { unique: true }),
+    db.collection('payments').createIndex({ paymentDate: -1, createdAt: -1 }),
+    db.collection('payments').createIndex({ kind: 1, customerId: 1, createdAt: -1 }),
+    db.collection('payments').createIndex({ kind: 1, supplierName: 1, createdAt: -1 }),
     db.collection('stock_movements').createIndex({ productId: 1, createdAt: -1 }),
   ])
   return db
