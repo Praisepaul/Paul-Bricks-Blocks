@@ -83,7 +83,9 @@ button, input, textarea, select { font: inherit; }
 @media (max-width: 420px) { .summary-grid { grid-template-columns: 1fr; } .action-grid { grid-template-columns: 1fr; } .account-strip { align-items: stretch; flex-direction: column; } .bottom-nav { grid-template-columns: repeat(4, 1fr); } .customer-row { flex-direction: column; } .customer-row .row-actions { justify-content: flex-start; } }
 @media print {
   body { background: white; }
-  .app-shell { display: none; }
-  .print-invoice { display: block; width: 100%; padding: 24px; color: #111827; background: white; }
+  .app-shell { display: block; min-height: 0; padding: 0; }
+  .app-shell * { visibility: hidden; }
+  .print-invoice { visibility: visible; display: block; position: absolute; inset: 0; width: 100%; padding: 24px; color: #111827; background: white; }
+  .print-invoice * { visibility: visible; }
   @page { margin: 12mm; }
 }
