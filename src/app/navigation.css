@@ -22,6 +22,9 @@
 .more-section-button:active { background: var(--surface-soft); }
 .more-section-button.current { background: var(--accent-soft); color: var(--accent-dark); }
 .more-section-button .section-arrow { color: var(--muted); }
+.section-switcher { display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 4px; margin-bottom: 4px; scrollbar-width: none; }
+.section-switcher::-webkit-scrollbar { display: none; }
+.section-switcher .button { min-height: 40px; white-space: nowrap; }
 .bottom-nav .nav-icon { position: relative; z-index: 1; display: grid; place-items: center; height: 25px; }
 .bottom-nav .nav-icon svg { width: 20px; height: 20px; }
 .bottom-nav .button-active::before { z-index: 0; }
