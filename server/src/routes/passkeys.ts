@@ -5,7 +5,7 @@ import {
   generateRegistrationOptions,
   verifyAuthenticationResponse,
   verifyRegistrationResponse,
-  type AuthenticatorTransportFuture,
+  type AuthenticatorTransport,
   type WebAuthnCredential,
 } from '@simplewebauthn/server'
 import { config } from '../config.js'
@@ -20,7 +20,7 @@ interface PasskeyRecord {
   userId: ObjectId
   publicKey: Binary
   counter: number
-  transports: AuthenticatorTransportFuture[]
+  transports: AuthenticatorTransport[]
   deviceType?: string
   backedUp?: boolean
   createdAt: Date
