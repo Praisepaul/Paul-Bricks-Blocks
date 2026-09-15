@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, PropsWithChildren } from 'react'
 
-type ButtonVariant = 'primary' | 'secondary' | 'active' | 'nav'
+type ButtonVariant = 'primary' | 'secondary' | 'active' | 'nav' | 'icon' | 'danger' | 'ghost'
 
 type ButtonProps = PropsWithChildren<ButtonHTMLAttributes<HTMLButtonElement>> & {
   variant?: ButtonVariant
