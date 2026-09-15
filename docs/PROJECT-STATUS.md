@@ -1,7 +1,7 @@
 # Project Status
 
 ## Current phase
-**Phase 3 — Documents + GST/accounting foundation**
+**Phase 4 — Simple quick actions + document attachments**
 
 ## Completed
 - React + TypeScript + Vite PWA scaffold.
@@ -45,15 +45,21 @@
 - Purchases now select an active supplier master record and store its supplier ID while retaining supplier name/state snapshots for document history.
 - Supplier payments now reference supplier IDs while retaining legacy supplier-name compatibility.
 - Supplier account statements now reference supplier IDs while still including historical purchases/payments that only have supplier names.
+- Home now has quick actions for Sale, Purchase, Customer, Supplier, Product, Stock, Expense, Labour, Bill and Documents so common tasks can be reached in one tap.
+- Documents page supports attachments for customers, suppliers, products, sales/invoices, purchases, expenses and bills.
+- Attachments are stored in MongoDB GridFS with metadata linking each file to its business record.
+- Attachments are limited to 5 MB per file and support common images, PDFs and office/text documents.
+- Authenticated users can open documents; the owner or the user who uploaded a document can delete it.
+- Attachment create/delete operations are included in the audit log.
 
 ## Current branch
 `main`
 
 ## Current module
-**Supplier Master** — implemented; ready for local verification.
+**Simple Quick Actions + Document Attachments** — implemented; ready for local verification.
 
 ## Supplier master design boundary
-- Supplier identity is now a dedicated MongoDB `suppliers` record.
+- Supplier identity is a dedicated MongoDB `suppliers` record.
 - Supplier records contain name, phone, address, GSTIN, state and active/inactive status.
 - New purchases reference `supplierId` and also keep supplier name/state snapshots so old documents remain readable even if supplier details later change.
 - New supplier payments reference `supplierId` and keep supplier name as a display snapshot.
@@ -85,7 +91,11 @@
 - Purchase documents are generated from the existing purchase record; no duplicate document collection is created.
 - Print uses the browser print flow and the existing print-only document styling, allowing Save as PDF on supported devices.
 - Share uses text details through the device's native share menu where available, with clipboard fallback.
-- This is a practical business-document foundation, not a full PDF-generation or document-storage service.
+- New attachments use a generic `attachments` GridFS bucket and metadata fields `entityType`, `entityId` and `uploadedByUserId`.
+- Supported attachment record types are customer, supplier, product, sale, purchase, expense and bill.
+- The central Documents page intentionally avoids duplicate document UI in every business module while still keeping attachments linked to the exact record.
+- Files are stored in MongoDB rather than the browser, so they are available to all authenticated users of the business.
+- This is a practical business-document storage foundation, not a full document-management or OCR system.
 
 ## Ledger design boundary
 - The ledger is derived from existing transaction data rather than duplicating every transaction into a second collection.
@@ -117,16 +127,16 @@
 - Bills remain obligations until settled, and settlement is recorded separately from the original bill amount.
 
 ## Next module
-Verify Supplier Master locally. Then move to **Dashboard improvements**: customer outstanding, supplier payable, stock value and simple cash/payment visibility.
+Local verification of this phase. After verification, return to practical usability improvements only; defer advanced GST work, product classification, notifications and similar non-essential features.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
 2. Money: sales, invoices, purchases, expenses, labour, payments, customers/suppliers.
 3. Documents: invoice/PDF, print, Android sharing, attachments.
 4. Stock.
-5. Labour improvements / worker management.
-6. Reports/dashboard improvements.
-7. GST functionality and accounting/reporting.
+5. Simple quick-add UX and document storage.
+6. Reports/dashboard improvements as needed.
+7. Production hardening, backup/export and deployment.
 
 ## Important rule
 This document is a living status record. Update it whenever a phase or major architectural decision changes.
