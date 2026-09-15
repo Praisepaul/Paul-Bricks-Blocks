@@ -1,4 +1,4 @@
-import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
+import { startAuthentication, startRegistration, type PublicKeyCredentialCreationOptionsJSON, type PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
 import type { AuthSession, AuthUser, UserRole } from '../../types/auth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
@@ -73,7 +73,7 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
 }
 
 export async function signInWithPasskey(): Promise<AuthSession> {
-  const options = await request<Record<string, unknown>>('/auth/passkey/login/options')
+  const options = await request<PublicKeyCredentialRequestOptionsJSON>('/auth/passkey/login/options')
   const response = await startAuthentication({ optionsJSON: options })
   const result = await request<ApiAuthResponse>('/auth/passkey/login/verify', {
     method: 'POST',
@@ -85,7 +85,7 @@ export async function signInWithPasskey(): Promise<AuthSession> {
 }
 
 export async function registerPasskey(): Promise<string> {
-  const options = await request<Record<string, unknown>>('/auth/passkey/register/options')
+  const options = await request<PublicKeyCredentialCreationOptionsJSON>('/auth/passkey/register/options')
   const response = await startRegistration({ optionsJSON: options })
   const result = await request<{ message: string }>('/auth/passkey/register/verify', {
     method: 'POST',
