@@ -38,14 +38,15 @@
 - Ledger now includes customer receipts, supplier payments and bill settlements.
 - Payments page is available to both Owner and Partner users.
 - Customer and supplier account statements show transaction history, payments and running balances.
-- Purchase documents now have a printable purchase record with business/supplier details, item, GST breakdown and total.
+- Purchase documents have a printable purchase record with business/supplier details, item, GST breakdown and total.
 - Purchase documents can be shared through native device sharing with clipboard fallback.
+- Customer and supplier account statements now support date-range filtering, browser Print/Save-as-PDF and native sharing with clipboard fallback.
 
 ## Current branch
 `main`
 
 ## Current module
-**Purchase documents** — ready for local verification.
+**Account statements** — ready for local verification.
 
 ## Payment design boundary
 - Customer receipts reduce Sales Receivable; they do not create another sale.
@@ -56,6 +57,13 @@
 - Payment amounts cannot exceed the currently calculated outstanding balance.
 - Payment methods currently include Cash, Bank Transfer, UPI and Cheque, with optional reference and notes.
 - This is a practical settlement foundation, not a complete banking, reconciliation or statutory accounting system.
+
+## Account statement design boundary
+- Statements are derived from the existing account API; no duplicate statement collection is created.
+- Date filters are presentation filters over the existing chronological statement.
+- Print uses the browser print flow and existing application styling, allowing Save as PDF on supported devices.
+- Share sends a readable text statement through the native device share menu where available, with clipboard fallback.
+- The statement balance remains the running balance from the underlying account history; filtered views show the last balance represented by the selected range.
 
 ## Document design boundary
 - Sales and purchases use separate business document numbers: invoice numbers for sales and purchase numbers for purchases.
@@ -94,7 +102,7 @@
 - Bills remain obligations until settled, and settlement is recorded separately from the original bill amount.
 
 ## Next module
-Verify purchase documents locally. Then improve customer and supplier account statement print/share workflows.
+Verify account statements locally. Then build the Supplier Master so purchases and payments can reference a proper supplier record instead of supplier-name text.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
