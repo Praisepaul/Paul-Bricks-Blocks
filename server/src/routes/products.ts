@@ -49,8 +49,9 @@ productsRouter.post('/', async (req: AuthenticatedRequest, res) => {
 })
 
 productsRouter.put('/:id', async (req: AuthenticatedRequest, res) => {
-  if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid product id' })
-  const productId = new ObjectId(req.params.id)
+  const idValue = String(req.params.id)
+  if (!ObjectId.isValid(idValue)) return res.status(400).json({ message: 'Invalid product id' })
+  const productId = new ObjectId(idValue)
   const existing = await getDb().collection<ProductRecord>('products').findOne({ _id: productId })
   if (!existing) return res.status(404).json({ message: 'Product not found' })
   const input = readProductInput(req.body)
