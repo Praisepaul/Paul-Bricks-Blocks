@@ -8,7 +8,7 @@ A mobile-first, installable PWA for simple business management. The system is de
 - PWA: Vite PWA tooling
 - Backend: Node.js + Express + TypeScript
 - Database: MongoDB
-- Authentication: JWT issued by the Node API
+- Authentication: WebAuthn/passkeys as the primary login method, with JWT sessions and email/password fallback
 - Password hashing: bcryptjs
 - Authorization: role-based access enforced by the Node API
 - Document storage: MongoDB GridFS
@@ -29,6 +29,8 @@ A mobile-first, installable PWA for simple business management. The system is de
 
 ## Current data areas
 - `users`: owner and partner accounts.
+- `passkeys`: WebAuthn public credentials linked to users. Private passkey material never enters the application database.
+- `webauthn_challenges`: short-lived one-time registration/authentication challenges with MongoDB TTL cleanup.
 - `audit_events`: immutable activity records.
 - `business_settings`: one business profile document identified by `_id: "business"`.
 - `customers`: customer master records with contact details, optional GST number, active status and timestamps.
@@ -44,6 +46,12 @@ A mobile-first, installable PWA for simple business management. The system is de
 - `attachments.files` / `attachments.chunks`: MongoDB GridFS storage for business documents and images. File metadata links each attachment to an application record.
 
 ## Authentication and permissions
+- Passkeys are the primary sign-in method. They use WebAuthn discoverable credentials with user verification required.
+- Email/password remains available as a fallback so a user is not locked out when passkey access is unavailable.
+- Any active owner or partner can register a passkey for their own account after signing in.
+- Passkey authentication is usernameless: the authenticator identifies the registered credential, then the server maps that credential to the internal user account.
+- Passkey challenges are short-lived and one-time; MongoDB TTL indexes remove expired challenge records automatically.
+- The server verifies both the expected origin and relying-party ID. Local development uses `localhost`; production must set `PASSKEY_RP_ID` and `PASSKEY_ORIGIN` to the deployed HTTPS domain/origin.
 - Owner: full business administration, including users and settings.
 - Partner: day-to-day business operations such as customers, suppliers, products, sales, purchases, expenses, labour, bills, payments and stock.
 - Backend authorization is authoritative; frontend visibility is only a usability feature.
@@ -146,7 +154,8 @@ Authenticated owners and partners can create and view bills through `/api/bills`
 - Financial records are never silently destroyed.
 - Important records use soft deletion where appropriate.
 - Audit events are immutable.
-- Keep financial calculations on the backend authoritative.
+- Financial calculations stay authoritative on the backend.
+- Passkeys should feel like the normal login; passwords are the fallback.
 - Keep document storage centralized and reusable.
 - Defer advanced features that do not make daily data entry easier.
 
