@@ -27,22 +27,32 @@
 - Labour creation audit events and MongoDB indexes.
 - Bills: bill name + category + amount + bill date + optional due date/notes + generated bill number + unpaid/paid status + mark-paid action.
 - Bill creation and payment-status audit events and MongoDB indexes.
+- Unified History: recent sales, purchases, expenses, labour and bills with simple type filters.
+- Live Dashboard totals: today's sales, purchases, expenses + labour, and pending bills.
 
 ## Current branch
 `main`
 
 ## Current module
-**Bills / recurring expenses** — ready for local verification.
+**History + dashboard totals** — ready for local verification.
 
-## Bills scope in this first version
-- Owners and partners can create and view bills.
-- Bill name, category, amount and bill date are required; due date and notes are optional.
-- Bills are unpaid by default and can be marked paid with today's business date.
-- Bill numbers are generated automatically as `BILL-YYYYMMDD-XXXXXX`.
-- Bills are a simple obligation/recurring-cost register. Marking a bill paid does not yet create an expense/payment transaction, preventing accidental double-counting.
+## History scope
+- Owners and partners can view a combined recent transaction timeline.
+- History currently includes sales, purchases, expenses, labour and bills.
+- Simple filters keep the screen easy to use on a phone.
+- The backend remains authoritative and returns a maximum of 200 combined recent records.
+
+## Dashboard scope
+- Today's sales and purchases are calculated from transaction creation time.
+- Today's expenses and labour use their business dates.
+- Pending bills show both total amount and count.
+- Dashboard values are loaded from the backend rather than hard-coded.
+
+## Important accounting boundary
+Sales and purchases currently remain money records without stock mutation. Bills remain obligations and marking a bill paid does not create an expense/payment transaction yet, preventing accidental double-counting. Stock will be designed from verified Sales + Purchases transactions.
 
 ## Next module
-After Bills is verified, build **History + dashboard totals**. Stock will then be designed from verified Sales + Purchases transactions rather than adding stock quantity to Products.
+After History + dashboard totals are verified, design **Stock** around purchase and sale movements. Do not add stock quantity directly to the Product master.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
