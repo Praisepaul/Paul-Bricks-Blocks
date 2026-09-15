@@ -33,10 +33,11 @@ A mobile-first, installable PWA for simple business management. The system is de
 - `sales`: completed sales with generated invoice number, customer/product snapshots, quantity, sale price, total and creator.
 - `purchases`: purchase records with generated purchase number, supplier name, product snapshot, quantity, purchase price, total and creator.
 - `expenses`: business expense records with generated expense number, category, optional description, amount, business date and creator.
+- `labour`: worker payment records with generated labour number, worker name, optional work description, amount, business date and creator.
 
 ## Authentication and permissions
 - Owner: full business administration, including users and settings.
-- Partner: day-to-day business operations such as customers, products, sales, purchases and expenses.
+- Partner: day-to-day business operations such as customers, products, sales, purchases, expenses and labour.
 - Backend authorization is authoritative; frontend visibility is only a usability feature.
 
 ## Customers
@@ -76,6 +77,16 @@ Authenticated owners and partners can create and view expenses through `/api/exp
 - Amount is rounded to two decimal places on the server.
 - Expenses currently record the money transaction only; reports, payments, attachments and GST treatment will be added later.
 - Expense creation is recorded in `audit_events`.
+
+## Labour
+Authenticated owners and partners can create and view labour payments through `/api/labour`.
+- A labour payment requires a worker name, positive amount and business date in `YYYY-MM-DD` format.
+- Work description is optional and is intended for a short note such as loading bricks, moulding blocks or delivery work.
+- The server generates a unique labour number in the form `LAB-YYYYMMDD-XXXXXX`.
+- The business date is stored separately from `createdAt`, so a payment can be recorded later for the day the work happened.
+- Amount is rounded to two decimal places on the server.
+- Labour currently records the payment only; worker master records, attendance, daily-rate calculations, advances and reports will be added only when they are useful.
+- Labour creation is recorded in `audit_events`.
 
 ## Design principles
 - Mobile first.
