@@ -35,12 +35,20 @@
 - Bill settlement now creates a payment record and marks the bill paid without creating a duplicate expense.
 - Ledger now includes customer receipts, supplier payments and bill settlements.
 - Payments page is available to both Owner and Partner users.
+- Customer and supplier Accounts page now shows transaction statements with running outstanding/payable balances.
 
 ## Current branch
 `main`
 
 ## Current module
-**Payments & settlement foundation** — ready for local verification.
+**Customer & supplier account statements** — ready for local verification.
+
+## Account statement design boundary
+- Customer statements derive sales and customer receipts into a simple running receivable balance.
+- Supplier statements derive purchases and supplier payments into a simple running payable balance.
+- Supplier identity currently uses supplier name because purchases do not yet have a supplier master record.
+- Statements are read-only views over existing transactions; they do not duplicate or alter the original sale, purchase or payment records.
+- This is an account-detail foundation, not a complete reconciliation, bank matching or statutory accounting system.
 
 ## Payment design boundary
 - Customer receipts reduce Sales Receivable; they do not create another sale.
@@ -82,7 +90,7 @@
 - Bills remain obligations until settled, and settlement is recorded separately from the original bill amount.
 
 ## Next module
-Verify payments and settlement locally. Then improve supplier/customer account detail and reconciliation only where the real workflow needs it.
+Verify customer and supplier account statements locally. Then add reconciliation features only if the real workflow needs them.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
