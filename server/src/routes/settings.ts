@@ -24,8 +24,7 @@ function sanitizeSettings(settings: BusinessSettings) {
   return { businessName: settings.businessName, phone: settings.phone, address: settings.address, gstNumber: settings.gstNumber, currency: settings.currency }
 }
 
-settingsRouter.get('/', async (req: AuthenticatedRequest, res) => {
-  if (req.user!.role !== 'owner') return res.status(403).json({ message: 'Owner access required' })
+settingsRouter.get('/', async (_req: AuthenticatedRequest, res) => {
   const stored = await getDb().collection<BusinessSettings>('business_settings').findOne({ _id: 'business' })
   return res.json({ settings: stored ? sanitizeSettings(stored) : defaults })
 })
