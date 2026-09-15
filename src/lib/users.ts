@@ -1,4 +1,4 @@
-import type { UserProfile } from '../types/auth'
+import type { UserProfile, UserRole } from '../types/auth'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
 
@@ -18,7 +18,7 @@ export async function listUsers(): Promise<UserProfile[]> {
   return result.users
 }
 
-export async function createPartner(input: { fullName: string; email: string; password: string }): Promise<UserProfile> {
+export async function createUser(input: { fullName: string; email: string; password: string; role: UserRole }): Promise<UserProfile> {
   const result = await request<{ user: UserProfile }>('/users', {
     method: 'POST',
     body: JSON.stringify(input),
