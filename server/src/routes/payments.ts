@@ -3,104 +3,11 @@ import { ObjectId } from 'mongodb'
 import { getDb } from '../db.js'
 import { recordAuditEvent } from '../audit.js'
 import { requireAuth, type AuthenticatedRequest } from '../middleware.js'
-
 export type PaymentKind = 'customer_receipt' | 'supplier_payment'
-
-export interface PaymentRecord {
-  _id: ObjectId
-  kind: PaymentKind
-  customerId?: ObjectId
-  customerName?: string
-  supplierName?: string
-  amount: number
-  paymentDate: string
-  method: string
-  reference: string
-  notes: string
-  createdByUserId: ObjectId
-  createdAt: Date
-}
-
-export const paymentsRouter = Router()
-paymentsRouter.use(requireAuth)
-
-function validDate(value: string) { return /^\d{4}-\d{2}-\d{2}$/.test(value) }
-function round(value: number) { return Math.round(value * 100) / 100 }
-function clean(payment: PaymentRecord) {
-  return { id: payment._id.toHexString(), kind: payment.kind, customerId: payment.customerId?.toHexString(), customerName: payment.customerName ?? '', supplierName: payment.supplierName ?? '', amount: payment.amount, paymentDate: payment.paymentDate, method: payment.method, reference: payment.reference, notes: payment.notes, createdAt: payment.createdAt.toISOString() }
-}
-
-paymentsRouter.get('/', async (_req, res) => {
-  const records = await getDb().collection<PaymentRecord>('payments').find({}).sort({ paymentDate: -1, createdAt: -1 }).limit(200).toArray()
-  return res.json(records.map(clean))
-})
-
-paymentsRouter.get('/outstanding', async (_req, res) => {
-  const db = getDb()
-  const [sales, purchases, payments] = await Promise.all([
-    db.collection('sales').find({}).toArray(),
-    db.collection('purchases').find({}).toArray(),
-    db.collection<PaymentRecord>('payments').find({}).toArray(),
-  ])
-  const customerTotals = new Map<string, { id: string; name: string; billed: number; received: number }>()
-  for (const sale of sales) {
-    const id = String(sale.customerId)
-    const current = customerTotals.get(id) ?? { id, name: String(sale.customerName), billed: 0, received: 0 }
-    current.billed += Number(sale.totalAmount ?? 0); customerTotals.set(id, current)
-  }
-  const supplierTotals = new Map<string, { name: string; billed: number; paid: number }>()
-  for (const purchase of purchases) {
-    const name = String(purchase.supplierName ?? '').trim()
-    const current = supplierTotals.get(name.toLowerCase()) ?? { name, billed: 0, paid: 0 }
-    current.billed += Number(purchase.totalAmount ?? purchase.subtotal ?? 0); supplierTotals.set(name.toLowerCase(), current)
-  }
-  for (const payment of payments) {
-    if (payment.kind === 'customer_receipt' && payment.customerId) {
-      const current = customerTotals.get(payment.customerId.toHexString()); if (current) current.received += payment.amount
-    }
-    if (payment.kind === 'supplier_payment' && payment.supplierName) {
-      const current = supplierTotals.get(payment.supplierName.trim().toLowerCase()); if (current) current.paid += payment.amount
-    }
-  }
-  return res.json({ customers: [...customerTotals.values()].map((item) => ({ ...item, outstanding: round(Math.max(0, item.billed - item.received)) })).filter((item) => item.outstanding > 0.005), suppliers: [...supplierTotals.values()].map((item) => ({ ...item, outstanding: round(Math.max(0, item.billed - item.paid)) })).filter((item) => item.outstanding > 0.005) })
-})
-
-paymentsRouter.post('/', async (req: AuthenticatedRequest, res) => {
-  const kind = req.body?.kind as PaymentKind
-  const amount = Number(req.body?.amount)
-  const paymentDate = String(req.body?.paymentDate ?? '').trim()
-  const method = String(req.body?.method ?? 'Cash').trim() || 'Cash'
-  const reference = String(req.body?.reference ?? '').trim()
-  const notes = String(req.body?.notes ?? '').trim()
-  if (kind !== 'customer_receipt' && kind !== 'supplier_payment') return res.status(400).json({ message: 'Valid payment type is required.' })
-  if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ message: 'Amount must be greater than zero.' })
-  if (!validDate(paymentDate)) return res.status(400).json({ message: 'Payment date must be YYYY-MM-DD.' })
-
-  const db = getDb()
-  let customerId: ObjectId | undefined
-  let customerName = ''
-  let supplierName = ''
-  if (kind === 'customer_receipt') {
-    const id = String(req.body?.customerId ?? '')
-    if (!ObjectId.isValid(id)) return res.status(400).json({ message: 'Valid customer is required.' })
-    const customer = await db.collection('customers').findOne({ _id: new ObjectId(id), isActive: true })
-    if (!customer) return res.status(400).json({ message: 'Customer is not active or does not exist.' })
-    customerId = customer._id; customerName = String(customer.name)
-    const sales = await db.collection('sales').find({ customerId }).toArray()
-    const paid = await db.collection<PaymentRecord>('payments').aggregate([{ $match: { kind: 'customer_receipt', customerId } }, { $group: { _id: null, total: { $sum: '$amount' } } }]).toArray()
-    const outstanding = round(sales.reduce((sum, sale) => sum + Number(sale.totalAmount ?? 0), 0) - Number(paid[0]?.total ?? 0))
-    if (amount > outstanding + 0.005) return res.status(400).json({ message: `Amount is greater than customer outstanding balance of ₹${Math.max(0, outstanding).toFixed(2)}.` })
-  } else {
-    supplierName = String(req.body?.supplierName ?? '').trim()
-    if (!supplierName) return res.status(400).json({ message: 'Supplier name is required.' })
-    const purchases = await db.collection('purchases').find({ supplierName }).toArray()
-    const paid = await db.collection<PaymentRecord>('payments').aggregate([{ $match: { kind: 'supplier_payment', supplierName } }, { $group: { _id: null, total: { $sum: '$amount' } } }]).toArray()
-    const outstanding = round(purchases.reduce((sum, purchase) => sum + Number(purchase.totalAmount ?? purchase.subtotal ?? 0), 0) - Number(paid[0]?.total ?? 0))
-    if (amount > outstanding + 0.005) return res.status(400).json({ message: `Amount is greater than supplier outstanding balance of ₹${Math.max(0, outstanding).toFixed(2)}.` })
-  }
-
-  const payment: PaymentRecord = { _id: new ObjectId(), kind, customerId, customerName, supplierName, amount: round(amount), paymentDate, method, reference, notes, createdByUserId: req.user!._id, createdAt: new Date() }
-  await db.collection<PaymentRecord>('payments').insertOne(payment)
-  await recordAuditEvent({ actorUserId: req.user!._id, actorRole: req.user!.role, action: 'create', entity: 'payment', entityId: payment._id.toHexString(), details: { kind, amount: payment.amount, paymentDate, customerName, supplierName, method } })
-  return res.status(201).json(clean(payment))
-})
+export interface PaymentRecord { _id: ObjectId; kind: PaymentKind; customerId?: ObjectId; customerName?: string; supplierId?: ObjectId; supplierName?: string; amount: number; paymentDate: string; method: string; reference: string; notes: string; createdByUserId: ObjectId; createdAt: Date }
+export const paymentsRouter = Router(); paymentsRouter.use(requireAuth)
+function validDate(value: string) { return /^\d{4}-\d{2}-\d{2}$/.test(value) }; function round(value: number) { return Math.round(value * 100) / 100 }
+function clean(payment: PaymentRecord) { return { id: payment._id.toHexString(), kind: payment.kind, customerId: payment.customerId?.toHexString(), customerName: payment.customerName ?? '', supplierId: payment.supplierId?.toHexString(), supplierName: payment.supplierName ?? '', amount: payment.amount, paymentDate: payment.paymentDate, method: payment.method, reference: payment.reference, notes: payment.notes, createdAt: payment.createdAt.toISOString() } }
+paymentsRouter.get('/', async (_req, res) => { const records = await getDb().collection<PaymentRecord>('payments').find({}).sort({ paymentDate: -1, createdAt: -1 }).limit(200).toArray(); return res.json(records.map(clean)) })
+paymentsRouter.get('/outstanding', async (_req, res) => { const db = getDb(); const [sales, purchases, payments] = await Promise.all([db.collection('sales').find({}).toArray(), db.collection('purchases').find({}).toArray(), db.collection<PaymentRecord>('payments').find({}).toArray()]); const customerTotals = new Map<string, { id: string; name: string; billed: number; received: number }>(); for (const sale of sales) { const id = String(sale.customerId); const current = customerTotals.get(id) ?? { id, name: String(sale.customerName), billed: 0, received: 0 }; current.billed += Number(sale.totalAmount ?? 0); customerTotals.set(id, current) }; const supplierTotals = new Map<string, { id?: string; name: string; billed: number; paid: number }>(); for (const purchase of purchases) { const key = purchase.supplierId ? String(purchase.supplierId) : String(purchase.supplierName ?? '').trim().toLowerCase(); const current = supplierTotals.get(key) ?? { id: purchase.supplierId ? String(purchase.supplierId) : undefined, name: String(purchase.supplierName ?? ''), billed: 0, paid: 0 }; current.billed += Number(purchase.totalAmount ?? purchase.subtotal ?? 0); supplierTotals.set(key, current) }; for (const payment of payments) { if (payment.kind === 'customer_receipt' && payment.customerId) { const current = customerTotals.get(payment.customerId.toHexString()); if (current) current.received += payment.amount } if (payment.kind === 'supplier_payment') { const key = payment.supplierId ? payment.supplierId.toHexString() : String(payment.supplierName ?? '').trim().toLowerCase(); const current = supplierTotals.get(key); if (current) current.paid += payment.amount } }; return res.json({ customers: [...customerTotals.values()].map(item => ({ ...item, outstanding: round(Math.max(0, item.billed - item.received)) })).filter(item => item.outstanding > 0.005), suppliers: [...supplierTotals.values()].map(item => ({ ...item, outstanding: round(Math.max(0, item.billed - item.paid)) })).filter(item => item.outstanding > 0.005) }) })
+paymentsRouter.post('/', async (req: AuthenticatedRequest, res) => { const kind = req.body?.kind as PaymentKind; const amount = Number(req.body?.amount); const paymentDate = String(req.body?.paymentDate ?? '').trim(); const method = String(req.body?.method ?? 'Cash').trim() || 'Cash'; const reference = String(req.body?.reference ?? '').trim(); const notes = String(req.body?.notes ?? '').trim(); if (kind !== 'customer_receipt' && kind !== 'supplier_payment') return res.status(400).json({ message: 'Valid payment type is required.' }); if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ message: 'Amount must be greater than zero.' }); if (!validDate(paymentDate)) return res.status(400).json({ message: 'Payment date must be YYYY-MM-DD.' }); const db = getDb(); let customerId: ObjectId | undefined; let customerName = ''; let supplierId: ObjectId | undefined; let supplierName = ''; if (kind === 'customer_receipt') { const id = String(req.body?.customerId ?? ''); if (!ObjectId.isValid(id)) return res.status(400).json({ message: 'Valid customer is required.' }); const customer = await db.collection('customers').findOne({ _id: new ObjectId(id), isActive: true }); if (!customer) return res.status(400).json({ message: 'Customer is not active or does not exist.' }); customerId = customer._id; customerName = String(customer.name); const sales = await db.collection('sales').find({ customerId }).toArray(); const paid = await db.collection<PaymentRecord>('payments').aggregate([{ $match: { kind: 'customer_receipt', customerId } }, { $group: { _id: null, total: { $sum: '$amount' } } }]).toArray(); const outstanding = round(sales.reduce((sum, sale) => sum + Number(sale.totalAmount ?? 0), 0) - Number(paid[0]?.total ?? 0)); if (amount > outstanding + 0.005) return res.status(400).json({ message: `Amount is greater than customer outstanding balance of ₹${Math.max(0, outstanding).toFixed(2)}.` }) } else { const id = String(req.body?.supplierId ?? ''); if (ObjectId.isValid(id)) { const supplier = await db.collection('suppliers').findOne({ _id: new ObjectId(id), isActive: true }); if (!supplier) return res.status(400).json({ message: 'Supplier is not active or does not exist.' }); supplierId = supplier._id; supplierName = String(supplier.name) } else { supplierName = String(req.body?.supplierName ?? '').trim(); if (!supplierName) return res.status(400).json({ message: 'Supplier is required.' }) } const purchaseFilter = supplierId ? { supplierId } : { supplierName }; const purchases = await db.collection('purchases').find(purchaseFilter).toArray(); const paymentFilter = supplierId ? { kind: 'supplier_payment', supplierId } : { kind: 'supplier_payment', supplierName }; const paid = await db.collection<PaymentRecord>('payments').aggregate([{ $match: paymentFilter }, { $group: { _id: null, total: { $sum: '$amount' } } }]).toArray(); const outstanding = round(purchases.reduce((sum, purchase) => sum + Number(purchase.totalAmount ?? purchase.subtotal ?? 0), 0) - Number(paid[0]?.total ?? 0)); if (amount > outstanding + 0.005) return res.status(400).json({ message: `Amount is greater than supplier outstanding balance of ₹${Math.max(0, outstanding).toFixed(2)}.` }) } const payment: PaymentRecord = { _id: new ObjectId(), kind, customerId, customerName, supplierId, supplierName, amount: round(amount), paymentDate, method, reference, notes, createdByUserId: req.user!._id, createdAt: new Date() }; await db.collection<PaymentRecord>('payments').insertOne(payment); await recordAuditEvent({ actorUserId: req.user!._id, actorRole: req.user!.role, action: 'create', entity: 'payment', entityId: payment._id.toHexString(), details: { kind, amount: payment.amount, paymentDate, customerName, supplierId: supplierId?.toHexString(), supplierName, method } }); return res.status(201).json(clean(payment)) })
