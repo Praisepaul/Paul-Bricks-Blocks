@@ -29,12 +29,22 @@
 - Reports now show COGS, closing stock value, gross profit and operating profit.
 - Sales are now blocked when the requested quantity is greater than available stock.
 - New opening/add-stock entries require an explicit cost per unit for reliable valuation.
+- Simple derived ledger foundation: sales, purchase, GST, COGS, expenses and labour are presented as debit/credit entries without requiring historical transactions to be re-entered.
+- Ledger page is available to both Owner and Partner users.
 
 ## Current branch
 `main`
 
 ## Current module
-**Stock valuation + COGS safeguards** — ready for local verification.
+**Formal ledger foundation** — ready for local verification.
+
+## Ledger design boundary
+- The first ledger is derived from existing transaction data rather than duplicating every transaction into a second collection.
+- Sales produce Sales Receivable → Sales and Output GST entries, plus COGS → Inventory using weighted-average stock valuation.
+- Purchases produce Inventory → Purchase Payable and Input GST → Purchase Payable entries.
+- Expenses and labour produce their expense account → Cash / Bank entries.
+- Bills remain outside the ledger until payment/settlement behavior is explicitly designed, avoiding accidental double-counting.
+- This is a simple accounting foundation, not a full statutory double-entry accounting or GST filing system.
 
 ## GST design boundary
 - GST rate is explicitly selected on each sale or purchase, starting from the business default rate.
@@ -56,7 +66,7 @@
 - Bills remain obligations; marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-Verify the new stock safeguards locally. Then build the formal ledger foundation around the now-stable sales, purchases, stock cost, expenses and labour data.
+Verify the ledger locally. Then build payment/settlement behavior carefully so receivables, payables and bill payments are introduced without double-counting.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
