@@ -1,0 +1,59 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { Button } from '../components/Button'
+import { createStockAdjustment, listStock, type StockItem } from '../lib/stock'
+import { listProducts, type Product } from '../lib/products'
+
+const emptyForm = { productId: '', type: 'adjustment' as 'opening' | 'adjustment', direction: 'add' as 'add' | 'remove', quantity: '', reason: '' }
+type StockForm = typeof emptyForm
+
+export function Stock() {
+  const [stock, setStock] = useState<StockItem[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [form, setForm] = useState<StockForm>(emptyForm)
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  async function loadData() {
+    setLoading(true); setError('')
+    try {
+      const [stockItems, productItems] = await Promise.all([listStock(), listProducts()])
+      setStock(stockItems)
+      setProducts(productItems.filter((product) => product.isActive))
+      setForm((current) => current.productId || !productItems.length ? current : { ...current, productId: productItems.find((product) => product.isActive)?.id ?? '' })
+    } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to load stock.') }
+    finally { setLoading(false) }
+  }
+
+  useEffect(() => { void loadData() }, [])
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError(''); setSuccess(''); setBusy(true)
+    try {
+      await createStockAdjustment({ productId: form.productId, type: form.type, direction: form.direction, quantity: Number(form.quantity), reason: form.reason })
+      setSuccess(form.type === 'opening' ? 'Opening stock added.' : 'Stock updated.')
+      setForm({ ...emptyForm, productId: form.productId })
+      await loadData()
+    } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to update stock.') }
+    finally { setBusy(false) }
+  }
+
+  return <div className="stock-page">
+    <section className="page-heading"><p className="eyebrow">Business</p><h2>Stock</h2><p>See what you have in the yard. Purchases add stock and sales reduce it.</p></section>
+    <section className="form-card"><h3>Add stock change</h3>
+      <form className="customer-form" onSubmit={handleSubmit}>
+        <label>Product<select value={form.productId} onChange={(event) => setForm({ ...form, productId: event.target.value })} required><option value="">Choose a product</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
+        <label>Entry type<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value as StockForm['type'], direction: event.target.value === 'opening' ? 'add' : form.direction })}><option value="opening">Opening stock</option><option value="adjustment">Stock correction</option></select></label>
+        <label>Change<select value={form.direction} onChange={(event) => setForm({ ...form, direction: event.target.value as StockForm['direction'] })} disabled={form.type === 'opening'}><option value="add">Add stock</option><option value="remove">Remove stock</option></select></label>
+        <label>Quantity<input type="number" min="0.01" step="0.01" value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} required /></label>
+        <label>Reason<input value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder={form.type === 'opening' ? 'Example: Stock already in yard' : 'Example: Broken bricks'} required /></label>
+        {error && <p className="error-text" role="alert">{error}</p>}{success && <p className="success-text" role="status">{success}</p>}
+        <div className="form-actions"><Button variant="primary" type="submit" disabled={busy || products.length === 0}>{busy ? 'Saving…' : 'Save stock change'}</Button></div>
+      </form>
+    </section>
+    <section className="user-list customer-list"><div className="list-heading"><h3>Current stock</h3><Button variant="secondary" type="button" onClick={() => void loadData()} disabled={loading || busy}>Refresh</Button></div>
+      {loading ? <p className="field-hint">Loading stock…</p> : stock.length === 0 ? <p className="field-hint">Add a product first.</p> : stock.map((item) => <article className="user-row customer-row" key={item.id}><div><strong>{item.name}</strong><span>Available: <b>{item.quantity.toFixed(2)} {item.unit}</b></span><span>Purchased {item.purchased.toFixed(2)} · Sold {item.sold.toFixed(2)} · Adjusted {item.adjusted.toFixed(2)}</span></div><span className="status-badge">{item.isActive ? 'Active' : 'Inactive'}</span></article>)}
+    </section>
+  </div>
+}
