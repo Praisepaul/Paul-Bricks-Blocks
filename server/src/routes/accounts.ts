@@ -1,0 +1,47 @@
+import { Router } from 'express'
+import { ObjectId } from 'mongodb'
+import { getDb } from '../db.js'
+import { requireAuth } from '../middleware.js'
+
+export const accountsRouter = Router()
+accountsRouter.use(requireAuth)
+
+function round(value: number) { return Math.round(value * 100) / 100 }
+function cleanDate(value: unknown) { return value instanceof Date ? value.toISOString() : String(value ?? '') }
+
+accountsRouter.get('/customer/:id', async (req, res) => {
+  const id = String(req.params.id)
+  if (!ObjectId.isValid(id)) return res.status(400).json({ message: 'Valid customer is required.' })
+  const customerId = new ObjectId(id)
+  const db = getDb()
+  const [customer, sales, payments] = await Promise.all([
+    db.collection('customers').findOne({ _id: customerId }),
+    db.collection('sales').find({ customerId }).sort({ createdAt: 1, _id: 1 }).toArray(),
+    db.collection('payments').find({ kind: 'customer_receipt', customerId }).sort({ paymentDate: 1, createdAt: 1, _id: 1 }).toArray(),
+  ])
+  if (!customer) return res.status(404).json({ message: 'Customer not found.' })
+  const entries = [
+    ...sales.map((sale) => ({ id: sale._id.toHexString(), date: cleanDate(sale.createdAt), type: 'sale' as const, number: String(sale.invoiceNumber ?? 'Sale'), description: `Sale ${sale.invoiceNumber ?? ''}`.trim(), debit: round(Number(sale.totalAmount ?? 0)), credit: 0 })),
+    ...payments.map((payment) => ({ id: payment._id.toHexString(), date: String(payment.paymentDate), type: 'receipt' as const, number: `PAY-${payment._id.toHexString().slice(-6).toUpperCase()}`, description: `Receipt · ${String(payment.method ?? 'Cash')}`, debit: 0, credit: round(Number(payment.amount ?? 0)) })),
+  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.id.localeCompare(b.id))
+  let balance = 0
+  const statement = entries.map((entry) => { balance = round(balance + entry.debit - entry.credit); return { ...entry, balance } })
+  return res.json({ account: { id: customer._id.toHexString(), name: String(customer.name), phone: String(customer.phone ?? ''), type: 'customer' }, statement, outstanding: round(Math.max(0, balance)) })
+})
+
+accountsRouter.get('/supplier', async (req, res) => {
+  const supplierName = String(req.query.name ?? '').trim()
+  if (!supplierName) return res.status(400).json({ message: 'Supplier name is required.' })
+  const db = getDb()
+  const [purchases, payments] = await Promise.all([
+    db.collection('purchases').find({ supplierName }).sort({ createdAt: 1, _id: 1 }).toArray(),
+    db.collection('payments').find({ kind: 'supplier_payment', supplierName }).sort({ paymentDate: 1, createdAt: 1, _id: 1 }).toArray(),
+  ])
+  const entries = [
+    ...purchases.map((purchase) => ({ id: purchase._id.toHexString(), date: cleanDate(purchase.createdAt), type: 'purchase' as const, number: String(purchase.purchaseNumber ?? 'Purchase'), description: `Purchase ${purchase.purchaseNumber ?? ''}`.trim(), debit: 0, credit: round(Number(purchase.totalAmount ?? purchase.subtotal ?? 0)) })),
+    ...payments.map((payment) => ({ id: payment._id.toHexString(), date: String(payment.paymentDate), type: 'payment' as const, number: `PAY-${payment._id.toHexString().slice(-6).toUpperCase()}`, description: `Payment · ${String(payment.method ?? 'Cash')}`, debit: round(Number(payment.amount ?? 0)), credit: 0 })),
+  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.id.localeCompare(b.id))
+  let balance = 0
+  const statement = entries.map((entry) => { balance = round(balance + entry.credit - entry.debit); return { ...entry, balance } })
+  return res.json({ account: { name: supplierName, type: 'supplier' }, statement, outstanding: round(Math.max(0, balance)) })
+})
