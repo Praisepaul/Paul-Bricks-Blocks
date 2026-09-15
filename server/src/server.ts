@@ -12,6 +12,8 @@ import { purchasesRouter } from './routes/purchases.js'
 import { expensesRouter } from './routes/expenses.js'
 import { labourRouter } from './routes/labour.js'
 import { billsRouter } from './routes/bills.js'
+import { historyRouter } from './routes/history.js'
+import { dashboardRouter } from './routes/dashboard.js'
 
 const app = express()
 app.use(cors({ origin: config.clientOrigin }))
@@ -27,6 +29,8 @@ app.use('/api/purchases', purchasesRouter)
 app.use('/api/expenses', expensesRouter)
 app.use('/api/labour', labourRouter)
 app.use('/api/bills', billsRouter)
+app.use('/api/history', historyRouter)
+app.use('/api/dashboard', dashboardRouter)
 
 async function start() {
   await connectDb()
