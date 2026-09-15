@@ -16,6 +16,7 @@
 - Owner user management and Partner accounts.
 - Owner-only business settings.
 - Customers and products with MongoDB persistence and audit events.
+- Supplier master with name, phone, address, GSTIN, state and active/inactive status.
 - Sales, purchases, expenses, labour and bills with server-side totals and audit events.
 - Unified History and live Dashboard.
 - Stock calculated from purchases minus sales plus explicit stock movements.
@@ -40,26 +41,40 @@
 - Customer and supplier account statements show transaction history, payments and running balances.
 - Purchase documents have a printable purchase record with business/supplier details, item, GST breakdown and total.
 - Purchase documents can be shared through native device sharing with clipboard fallback.
-- Customer and supplier account statements now support date-range filtering, browser Print/Save-as-PDF and native sharing with clipboard fallback.
+- Customer and supplier account statements support date-range filtering, browser Print/Save-as-PDF and native sharing with clipboard fallback.
+- Purchases now select an active supplier master record and store its supplier ID while retaining supplier name/state snapshots for document history.
+- Supplier payments now reference supplier IDs while retaining legacy supplier-name compatibility.
+- Supplier account statements now reference supplier IDs while still including historical purchases/payments that only have supplier names.
 
 ## Current branch
 `main`
 
 ## Current module
-**Account statements** — ready for local verification.
+**Supplier Master** — implemented; ready for local verification.
+
+## Supplier master design boundary
+- Supplier identity is now a dedicated MongoDB `suppliers` record.
+- Supplier records contain name, phone, address, GSTIN, state and active/inactive status.
+- New purchases reference `supplierId` and also keep supplier name/state snapshots so old documents remain readable even if supplier details later change.
+- New supplier payments reference `supplierId` and keep supplier name as a display snapshot.
+- Supplier accounts prefer the supplier ID but include legacy records matched by supplier name so historical balances are not lost.
+- Existing purchases and payments without supplier IDs remain valid; no destructive migration is required.
+- Disabling a supplier prevents new purchases/payments from selecting it, but historical transactions remain available.
+- Supplier names are kept simple and user-managed; this is not yet a full vendor onboarding/KYC system.
 
 ## Payment design boundary
 - Customer receipts reduce Sales Receivable; they do not create another sale.
 - Supplier payments reduce Purchase Payable; they do not create another purchase or expense.
 - Bill payments reduce Bill Payable; the existing bill remains an obligation record and is not converted into an expense again.
 - Customer and supplier balances are derived from existing sales/purchases minus recorded payments.
-- Supplier identity currently uses supplier name because purchases do not yet have a supplier master record.
+- Supplier identity now uses the supplier master for new transactions, with name-based fallback for legacy records.
 - Payment amounts cannot exceed the currently calculated outstanding balance.
 - Payment methods currently include Cash, Bank Transfer, UPI and Cheque, with optional reference and notes.
 - This is a practical settlement foundation, not a complete banking, reconciliation or statutory accounting system.
 
 ## Account statement design boundary
 - Statements are derived from the existing account API; no duplicate statement collection is created.
+- Supplier statements prefer supplier ID and include legacy name-based history.
 - Date filters are presentation filters over the existing chronological statement.
 - Print uses the browser print flow and existing application styling, allowing Save as PDF on supported devices.
 - Share sends a readable text statement through the native device share menu where available, with clipboard fallback.
@@ -102,7 +117,7 @@
 - Bills remain obligations until settled, and settlement is recorded separately from the original bill amount.
 
 ## Next module
-Verify account statements locally. Then build the Supplier Master so purchases and payments can reference a proper supplier record instead of supplier-name text.
+Verify Supplier Master locally. Then move to **Dashboard improvements**: customer outstanding, supplier payable, stock value and simple cash/payment visibility.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
