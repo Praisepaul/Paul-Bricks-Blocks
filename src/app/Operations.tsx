@@ -1,24 +1,26 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Button } from '../components/Button'
 import { Expenses } from './Expenses'
 import { Bills } from './Bills'
 import { Labour } from './Labour'
 
-export function Operations() {
-  const [view, setView] = useState<'overview' | 'expenses' | 'bills' | 'labour'>('overview')
-  if (view === 'expenses') return <HubView title="Expenses" onBack={() => setView('overview')}><Expenses /></HubView>
-  if (view === 'bills') return <HubView title="Bills" onBack={() => setView('overview')}><Bills /></HubView>
-  if (view === 'labour') return <HubView title="Labour" onBack={() => setView('overview')}><Labour /></HubView>
-  return <section className="form-card">
-    <div className="page-heading"><div><p className="eyebrow">More money</p><h2>Expenses & bills</h2><p>Expenses, bills and labour are grouped together without removing any of their existing screens.</p></div></div>
-    <div className="action-grid">
-      <Button variant="primary" onClick={() => setView('expenses')}>Show expenses</Button>
-      <Button variant="secondary" onClick={() => setView('bills')}>Show bills</Button>
-      <Button variant="secondary" onClick={() => setView('labour')}>Show labour</Button>
-    </div>
-  </section>
-}
+type View = 'expenses' | 'bills' | 'labour'
 
-function HubView({ title, onBack, children }: { title: string; onBack: () => void; children: ReactNode }) {
-  return <><section className="page-heading"><div><p className="eyebrow">Expenses & bills</p><h2>{title}</h2></div><Button variant="secondary" onClick={onBack}>← Expenses & bills</Button></section>{children}</>
+export function Operations() {
+  const [view, setView] = useState<View>('expenses')
+  return <div className="operations-page">
+    <section className="page-heading">
+      <div>
+        <p className="eyebrow">More money</p>
+        <h2>{view === 'expenses' ? 'Expenses' : view === 'bills' ? 'Bills' : 'Labour'}</h2>
+        <p>Switch between expenses, bills and labour here without leaving this tab.</p>
+      </div>
+    </section>
+    <div className="section-switcher" role="tablist" aria-label="Expenses and bills sections">
+      <Button variant={view === 'expenses' ? 'active' : 'secondary'} role="tab" aria-selected={view === 'expenses'} onClick={() => setView('expenses')}>Expenses</Button>
+      <Button variant={view === 'bills' ? 'active' : 'secondary'} role="tab" aria-selected={view === 'bills'} onClick={() => setView('bills')}>Bills</Button>
+      <Button variant={view === 'labour' ? 'active' : 'secondary'} role="tab" aria-selected={view === 'labour'} onClick={() => setView('labour')}>Labour</Button>
+    </div>
+    {view === 'expenses' ? <Expenses /> : view === 'bills' ? <Bills /> : <Labour />}
+  </div>
 }
