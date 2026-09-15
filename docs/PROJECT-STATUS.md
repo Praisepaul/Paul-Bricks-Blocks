@@ -31,19 +31,35 @@
 - New opening/add-stock entries require an explicit cost per unit for reliable valuation.
 - Simple derived ledger foundation: sales, purchase, GST, COGS, expenses and labour are presented as debit/credit entries without requiring historical transactions to be re-entered.
 - Ledger page is available to both Owner and Partner users.
+- Customer receipts and supplier payments are recorded with payment method/date/reference and checked against outstanding balances.
+- Bill settlement now creates a payment record and marks the bill paid without creating a duplicate expense.
+- Ledger now includes customer receipts, supplier payments and bill settlements.
+- Payments page is available to both Owner and Partner users.
 
 ## Current branch
 `main`
 
 ## Current module
-**Formal ledger foundation** — ready for local verification.
+**Payments & settlement foundation** — ready for local verification.
+
+## Payment design boundary
+- Customer receipts reduce Sales Receivable; they do not create another sale.
+- Supplier payments reduce Purchase Payable; they do not create another purchase or expense.
+- Bill payments reduce Bill Payable; the existing bill remains an obligation record and is not converted into an expense again.
+- Customer and supplier balances are derived from existing sales/purchases minus recorded payments.
+- Supplier identity currently uses supplier name because purchases do not yet have a supplier master record.
+- Payment amounts cannot exceed the currently calculated outstanding balance.
+- Payment methods currently include Cash, Bank Transfer, UPI and Cheque, with optional reference and notes.
+- This is a practical settlement foundation, not a complete banking, reconciliation or statutory accounting system.
 
 ## Ledger design boundary
-- The first ledger is derived from existing transaction data rather than duplicating every transaction into a second collection.
+- The ledger is derived from existing transaction data rather than duplicating every transaction into a second collection.
 - Sales produce Sales Receivable → Sales and Output GST entries, plus COGS → Inventory using weighted-average stock valuation.
 - Purchases produce Inventory → Purchase Payable and Input GST → Purchase Payable entries.
 - Expenses and labour produce their expense account → Cash / Bank entries.
-- Bills remain outside the ledger until payment/settlement behavior is explicitly designed, avoiding accidental double-counting.
+- Customer receipts produce Cash / Bank → Sales Receivable entries.
+- Supplier payments produce Purchase Payable → Cash / Bank entries.
+- Bill payments produce Bill Payable → Cash / Bank entries.
 - This is a simple accounting foundation, not a full statutory double-entry accounting or GST filing system.
 
 ## GST design boundary
@@ -62,11 +78,11 @@
 - Operating profit is gross profit minus expenses and labour.
 - New added stock requires an explicit unit cost; stock removal consumes the current average cost.
 - Sales cannot reduce stock below zero.
-- Reports still do not claim receivables, payables, or GST filing liability.
-- Bills remain obligations; marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
+- Reports still do not claim GST filing liability.
+- Bills remain obligations until settled, and settlement is recorded separately from the original bill amount.
 
 ## Next module
-Verify the ledger locally. Then build payment/settlement behavior carefully so receivables, payables and bill payments are introduced without double-counting.
+Verify payments and settlement locally. Then improve supplier/customer account detail and reconciliation only where the real workflow needs it.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
