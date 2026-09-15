@@ -1,7 +1,7 @@
 # Project Status
 
 ## Current phase
-**Phase 2 — Money + Labour foundation**
+**Phase 3 — Documents + business usability**
 
 ## Completed
 - React + TypeScript + Vite PWA scaffold.
@@ -31,26 +31,28 @@
 - Live Dashboard totals: today's sales, purchases, expenses + labour, and pending bills.
 - Stock: current stock calculated from all purchases minus all sales plus manual opening/correction movements.
 - Stock: opening stock and simple add/remove correction workflow with audit events.
+- Printable sales invoices using business settings, customer details and sale information.
 
 ## Current branch
 `main`
 
 ## Current module
-**Stock** — ready for local verification.
+**Printable invoices** — ready for local verification.
 
-## Stock scope
-- Owners and partners can view current quantity for every product.
-- Purchase quantities automatically increase the calculated stock balance.
-- Sale quantities automatically decrease the calculated stock balance.
-- Opening stock can be entered for products already in the yard.
-- Corrections can add or remove stock with a required reason.
-- Stock movements are stored separately from Products; Product documents do not carry a mutable stock quantity.
+## Invoice scope
+- Each recent sale has a **Print invoice** action.
+- Invoice uses the existing generated invoice number.
+- Invoice shows business name, address, phone and GST number when configured.
+- Invoice shows current customer contact/address/GST details when available.
+- Invoice shows product, quantity, unit price and total.
+- Browser print is used deliberately for v1; the user can choose “Save as PDF” from the normal print dialog without adding a heavy PDF dependency yet.
+- Authenticated partners can read business settings because those settings are needed for invoice output; only owners can change them.
 
 ## Important accounting boundary
 Sales and purchases remain the source transactions for money and quantity. Stock is derived from their quantities plus explicit stock movements. Bills remain obligations and marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-After Stock is verified, continue with the next business capability rather than adding complexity to stock prematurely. Likely candidates are invoice/document output or deeper stock history/reporting, based on actual usage.
+After invoice printing is verified, continue with practical document usability such as a cleaner invoice/share flow before adding advanced GST or accounting complexity.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
