@@ -2,7 +2,9 @@ export interface BusinessSettings {
   businessName: string
   phone: string
   address: string
+  state: string
   gstNumber: string
+  defaultGstRate: number
   currency: string
 }
 
@@ -25,9 +27,6 @@ export async function getBusinessSettings(): Promise<BusinessSettings> {
 }
 
 export async function saveBusinessSettings(settings: BusinessSettings): Promise<BusinessSettings> {
-  const result = await request<{ settings: BusinessSettings }>('/settings', {
-    method: 'PUT',
-    body: JSON.stringify(settings),
-  })
+  const result = await request<{ settings: BusinessSettings }>('/settings', { method: 'PUT', body: JSON.stringify(settings) })
   return result.settings
 }
