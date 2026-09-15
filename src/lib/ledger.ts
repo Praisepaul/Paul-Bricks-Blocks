@@ -1,23 +1,5 @@
-export type LedgerType = 'sale' | 'purchase' | 'expense' | 'labour' | 'stock'
+export type LedgerType = 'sale' | 'purchase' | 'expense' | 'labour' | 'payment'
 export interface LedgerEntry { id: string; date: string; type: LedgerType; number: string; description: string; debitAccount: string; creditAccount: string; amount: number }
-
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
-
-async function request<T>(path: string): Promise<T> {
-  const headers = new Headers({ 'Content-Type': 'application/json' })
-  const token = localStorage.getItem('pbb_auth_token')
-  if (token) headers.set('Authorization', `Bearer ${token}`)
-  const response = await fetch(`${API_URL}${path}`, { headers })
-  const body = (await response.json().catch(() => ({}))) as { message?: string }
-  if (!response.ok) throw new Error(body.message ?? 'Request failed')
-  return body as T
-}
-
-export async function listLedger(from?: string, to?: string): Promise<LedgerEntry[]> {
-  const params = new URLSearchParams()
-  if (from) params.set('from', from)
-  if (to) params.set('to', to)
-  const query = params.toString()
-  const result = await request<{ entries: LedgerEntry[] }>(`/ledger${query ? `?${query}` : ''}`)
-  return result.entries
-}
+async function request<T>(path: string): Promise<T> { const headers = new Headers({ 'Content-Type': 'application/json' }); const token = localStorage.getItem('pbb_auth_token'); if (token) headers.set('Authorization', `Bearer ${token}`); const response = await fetch(`${API_URL}${path}`, { headers }); const body = await response.json().catch(() => ({})) as { message?: string }; if (!response.ok) throw new Error(body.message ?? 'Request failed'); return body as T }
+export async function listLedger(from?: string, to?: string): Promise<LedgerEntry[]> { const params = new URLSearchParams(); if (from) params.set('from', from); if (to) params.set('to', to); const query = params.toString(); const result = await request<{ entries: LedgerEntry[] }>(`/ledger${query ? `?${query}` : ''}`); return result.entries }
