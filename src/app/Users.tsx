@@ -70,7 +70,7 @@ export function Users() {
       </article>)}
     </section>
 
-    <FormSheet open={open} title="Add user" onClose={() => { if (!busy) { resetForm(); setOpen(false) } }}>
+    {open && <FormSheet title="Add user" onClose={() => { if (!busy) { resetForm(); setOpen(false) } }}>
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>Full name<input value={fullName} onChange={(event) => setFullName(event.target.value)} required /></label>
         <label>Email<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
@@ -84,6 +84,6 @@ export function Users() {
         {error && <p className="error-text" role="alert">{error}</p>}
         <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create user'}</Button>
       </form>
-    </FormSheet>
+    </FormSheet>}
   </section>
 }
