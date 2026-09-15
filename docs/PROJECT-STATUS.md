@@ -27,12 +27,14 @@
 - Purchase GST/input tax capture: supplier state, purchase GST rate, CGST/SGST or IGST calculation, stored tax breakdown, and report aggregation.
 - Weighted-average stock valuation and COGS calculation from purchase, sale and stock-movement history.
 - Reports now show COGS, closing stock value, gross profit and operating profit.
+- Sales are now blocked when the requested quantity is greater than available stock.
+- New opening/add-stock entries require an explicit cost per unit for reliable valuation.
 
 ## Current branch
 `main`
 
 ## Current module
-**Stock valuation + COGS foundation** — ready for local verification.
+**Stock valuation + COGS safeguards** — ready for local verification.
 
 ## GST design boundary
 - GST rate is explicitly selected on each sale or purchase, starting from the business default rate.
@@ -48,11 +50,13 @@
 - Older opening/adjustment movements without a stored unit cost use the product purchase price as a fallback, and Reports clearly warn when this affects valuation completeness.
 - Gross profit is sales before GST minus COGS.
 - Operating profit is gross profit minus expenses and labour.
+- New added stock requires an explicit unit cost; stock removal consumes the current average cost.
+- Sales cannot reduce stock below zero.
 - Reports still do not claim receivables, payables, or GST filing liability.
 - Bills remain obligations; marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-Verify Stock valuation and Reports locally with real purchase/sale data. Then add accounting safeguards around negative stock and improve opening-stock cost capture before expanding the formal ledger.
+Verify the new stock safeguards locally. Then build the formal ledger foundation around the now-stable sales, purchases, stock cost, expenses and labour data.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
