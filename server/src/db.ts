@@ -15,6 +15,8 @@ export async function connectDb(): Promise<Db> {
     db.collection('sales').createIndex({ invoiceNumber: 1 }, { unique: true }),
     db.collection('purchases').createIndex({ createdAt: -1 }),
     db.collection('purchases').createIndex({ purchaseNumber: 1 }, { unique: true }),
+    db.collection('expenses').createIndex({ expenseDate: -1, createdAt: -1 }),
+    db.collection('expenses').createIndex({ expenseNumber: 1 }, { unique: true }),
   ])
   return db
 }
