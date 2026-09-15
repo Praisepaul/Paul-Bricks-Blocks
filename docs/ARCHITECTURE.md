@@ -32,10 +32,11 @@ A mobile-first, installable PWA for simple business management. The system is de
 - `products`: product/brick-type master records with unit, selling price, purchase price and active status.
 - `sales`: completed sales with generated invoice number, customer/product snapshots, quantity, sale price, total and creator.
 - `purchases`: purchase records with generated purchase number, supplier name, product snapshot, quantity, purchase price, total and creator.
+- `expenses`: business expense records with generated expense number, category, optional description, amount, business date and creator.
 
 ## Authentication and permissions
 - Owner: full business administration, including users and settings.
-- Partner: day-to-day business operations such as customers, products, sales and purchases.
+- Partner: day-to-day business operations such as customers, products, sales, purchases and expenses.
 - Backend authorization is authoritative; frontend visibility is only a usability feature.
 
 ## Customers
@@ -64,6 +65,17 @@ Authenticated owners and partners can create and view purchases through `/api/pu
 - Purchases currently record the money transaction only; stock increases will be introduced through a dedicated stock movement design.
 - Purchase creation is recorded in `audit_events`.
 - Supplier is currently stored as a required text snapshot. A dedicated supplier master can be added later when supplier management becomes useful.
+
+## Expenses
+Authenticated owners and partners can create and view expenses through `/api/expenses`.
+- An expense requires a category, positive amount and business date in `YYYY-MM-DD` format.
+- Description is optional and is intended for a short note such as the reason for the expense.
+- The frontend offers simple starter categories: Electricity, Transport, Diesel, Repairs, Office, Rent and Other. The backend keeps category as text so the list can evolve without a migration.
+- The server generates a unique expense number in the form `EXP-YYYYMMDD-XXXXXX`.
+- The business date is stored separately from `createdAt`, so an expense can be recorded later for the day it actually happened.
+- Amount is rounded to two decimal places on the server.
+- Expenses currently record the money transaction only; reports, payments, attachments and GST treatment will be added later.
+- Expense creation is recorded in `audit_events`.
 
 ## Design principles
 - Mobile first.
