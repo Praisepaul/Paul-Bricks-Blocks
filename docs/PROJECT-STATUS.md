@@ -25,12 +25,14 @@
 - Accounting foundation: dashboard sales-before-GST, GST collected, purchases, and expenses/labour transaction snapshot.
 - Reports: Today, 7 days, this month, and custom date-range summaries for sales, purchases, expenses, labour, GST collected and unpaid bills.
 - Purchase GST/input tax capture: supplier state, purchase GST rate, CGST/SGST or IGST calculation, stored tax breakdown, and report aggregation.
+- Weighted-average stock valuation and COGS calculation from purchase, sale and stock-movement history.
+- Reports now show COGS, closing stock value, gross profit and operating profit.
 
 ## Current branch
 `main`
 
 ## Current module
-**Purchase GST + input tax foundation** — ready for local verification.
+**Stock valuation + COGS foundation** — ready for local verification.
 
 ## GST design boundary
 - GST rate is explicitly selected on each sale or purchase, starting from the business default rate.
@@ -42,14 +44,15 @@
 - This is a calculation/accounting foundation, not a claim that the application is a complete GST-compliance or filing system.
 
 ## Accounting design boundary
-- Reports use explicit transaction periods rather than pretending that the dashboard is a full ledger.
-- Sales, purchases, expenses and labour are shown separately and as a simple transaction-level cash movement snapshot.
-- It deliberately does **not** calculate final accounting profit, COGS, receivables, payables, or GST filing liability yet.
-- Stock valuation and formal books should be added before presenting a number as final profit.
+- Stock uses weighted-average cost: purchase subtotal increases stock value, sales consume stock at the current average cost, and closing stock is the remaining quantity multiplied by its current weighted-average cost.
+- Older opening/adjustment movements without a stored unit cost use the product purchase price as a fallback, and Reports clearly warn when this affects valuation completeness.
+- Gross profit is sales before GST minus COGS.
+- Operating profit is gross profit minus expenses and labour.
+- Reports still do not claim receivables, payables, or GST filing liability.
 - Bills remain obligations; marking a bill paid does not create an expense/payment transaction, preventing accidental double-counting.
 
 ## Next module
-Verify purchase GST calculations and Reports locally. Then build the stock valuation/COGS foundation before presenting formal profit or GST filing workflows.
+Verify Stock valuation and Reports locally with real purchase/sale data. Then add accounting safeguards around negative stock and improve opening-stock cost capture before expanding the formal ledger.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
