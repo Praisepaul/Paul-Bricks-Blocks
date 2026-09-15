@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { ObjectId } from 'mongodb'
 import { getDb } from '../db.js'
-import { createPasswordHash, sanitizeUser, type UserRecord } from '../auth.js'
+import { createPasswordHash, sanitizeUser, type UserRecord, type UserRole } from '../auth.js'
 import { recordAuditEvent } from '../audit.js'
 import { requireAuth, type AuthenticatedRequest } from '../middleware.js'
 
@@ -27,9 +27,10 @@ usersRouter.post('/', async (req: AuthenticatedRequest, res) => {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : ''
   const password = typeof req.body?.password === 'string' ? req.body.password : ''
   const fullName = typeof req.body?.fullName === 'string' ? req.body.fullName.trim() : ''
+  const role = req.body?.role === 'owner' || req.body?.role === 'partner' ? req.body.role as UserRole : ''
 
-  if (!email || !fullName || password.length < 8) {
-    return res.status(400).json({ message: 'Full name, email and a password of at least 8 characters are required' })
+  if (!email || !fullName || password.length < 8 || !role) {
+    return res.status(400).json({ message: 'Full name, email, role and a password of at least 8 characters are required' })
   }
 
   const users = getDb().collection<UserRecord>('users')
@@ -42,7 +43,7 @@ usersRouter.post('/', async (req: AuthenticatedRequest, res) => {
     email,
     passwordHash: await createPasswordHash(password),
     fullName,
-    role: 'partner',
+    role,
     isActive: true,
     createdAt: now,
     updatedAt: now,
