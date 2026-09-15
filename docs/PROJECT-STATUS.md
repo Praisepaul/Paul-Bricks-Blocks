@@ -29,7 +29,7 @@
 - Reports now show COGS, closing stock value, gross profit and operating profit.
 - Sales are blocked when the requested quantity is greater than available stock.
 - New opening/add-stock entries require an explicit cost per unit for reliable valuation.
-- Stock removal is now also blocked when the requested quantity is greater than available stock.
+- Stock removal is also blocked when the requested quantity is greater than available stock.
 - Stock screen shows the currently available quantity before a stock correction is saved.
 - Simple derived ledger foundation: sales, purchase, GST, COGS, expenses and labour are presented as debit/credit entries without requiring historical transactions to be re-entered.
 - Ledger page is available to both Owner and Partner users.
@@ -38,12 +38,14 @@
 - Ledger now includes customer receipts, supplier payments and bill settlements.
 - Payments page is available to both Owner and Partner users.
 - Customer and supplier account statements show transaction history, payments and running balances.
+- Purchase documents now have a printable purchase record with business/supplier details, item, GST breakdown and total.
+- Purchase documents can be shared through native device sharing with clipboard fallback.
 
 ## Current branch
 `main`
 
 ## Current module
-**Stock integrity** — ready for local verification.
+**Purchase documents** — ready for local verification.
 
 ## Payment design boundary
 - Customer receipts reduce Sales Receivable; they do not create another sale.
@@ -54,6 +56,13 @@
 - Payment amounts cannot exceed the currently calculated outstanding balance.
 - Payment methods currently include Cash, Bank Transfer, UPI and Cheque, with optional reference and notes.
 - This is a practical settlement foundation, not a complete banking, reconciliation or statutory accounting system.
+
+## Document design boundary
+- Sales and purchases use separate business document numbers: invoice numbers for sales and purchase numbers for purchases.
+- Purchase documents are generated from the existing purchase record; no duplicate document collection is created.
+- Print uses the browser print flow and the existing print-only document styling, allowing Save as PDF on supported devices.
+- Share uses text details through the device's native share menu where available, with clipboard fallback.
+- This is a practical business-document foundation, not a full PDF-generation or document-storage service.
 
 ## Ledger design boundary
 - The ledger is derived from existing transaction data rather than duplicating every transaction into a second collection.
@@ -85,7 +94,7 @@
 - Bills remain obligations until settled, and settlement is recorded separately from the original bill amount.
 
 ## Next module
-Verify stock integrity locally. Then improve purchase documents and account statement print/share workflows.
+Verify purchase documents locally. Then improve customer and supplier account statement print/share workflows.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
