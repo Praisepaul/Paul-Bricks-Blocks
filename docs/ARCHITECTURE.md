@@ -34,10 +34,11 @@ A mobile-first, installable PWA for simple business management. The system is de
 - `purchases`: purchase records with generated purchase number, supplier name, product snapshot, quantity, purchase price, total and creator.
 - `expenses`: business expense records with generated expense number, category, optional description, amount, business date and creator.
 - `labour`: worker payment records with generated labour number, worker name, optional work description, amount, business date and creator.
+- `bills`: bill records with generated bill number, title, category, amount, bill date, optional due date, paid status/date, optional notes and creator.
 
 ## Authentication and permissions
 - Owner: full business administration, including users and settings.
-- Partner: day-to-day business operations such as customers, products, sales, purchases, expenses and labour.
+- Partner: day-to-day business operations such as customers, products, sales, purchases, expenses, labour and bills.
 - Backend authorization is authoritative; frontend visibility is only a usability feature.
 
 ## Customers
@@ -87,6 +88,16 @@ Authenticated owners and partners can create and view labour payments through `/
 - Amount is rounded to two decimal places on the server.
 - Labour currently records the payment only; worker master records, attendance, daily-rate calculations, advances and reports will be added only when they are useful.
 - Labour creation is recorded in `audit_events`.
+
+## Bills / recurring expenses
+Authenticated owners and partners can create and view bills through `/api/bills`, and mark an unpaid bill as paid.
+- A bill requires a name, category, positive amount and bill date in `YYYY-MM-DD` format.
+- Due date and notes are optional; due date cannot be before the bill date.
+- The server generates a unique bill number in the form `BILL-YYYYMMDD-XXXXXX`.
+- Bills default to unpaid and can be marked paid with a business paid date.
+- The frontend offers simple starter categories: Electricity, Water, Rent, Phone / Internet, Loan and Other.
+- Marking a bill paid changes the bill's status and records an audit event, but does not automatically create an expense or payment transaction. This avoids double-counting money until the payment/accounting model is designed.
+- Bills are a register of obligations/recurring costs; actual money-out transactions remain separate in Expenses for now.
 
 ## Design principles
 - Mobile first.
