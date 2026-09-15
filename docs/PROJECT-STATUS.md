@@ -1,7 +1,7 @@
 # Project Status
 
 ## Current phase
-**Phase 2 — Money: Sales + Purchases + Expenses foundation**
+**Phase 2 — Money + Labour foundation**
 
 ## Completed
 - React + TypeScript + Vite PWA scaffold.
@@ -23,30 +23,31 @@
 - Purchase creation audit events and MongoDB indexes.
 - Expenses: category + optional description + amount + business date + server-calculated amount + generated expense number + recent expenses list.
 - Expense creation audit events and MongoDB indexes.
+- Labour: worker + optional work description + amount + business date + generated labour number + recent labour payments list.
+- Labour creation audit events and MongoDB indexes.
 
 ## Current branch
 `main`
 
 ## Current module
-**Expenses** — ready for local verification.
+**Labour** — ready for local verification.
 
-## Expense scope in this first version
-- Owners and partners can create expenses.
-- Category and amount are required; description is optional.
-- Expense date is stored separately from the system creation timestamp.
-- Starter categories are Electricity, Transport, Diesel, Repairs, Office, Rent and Other.
-- Expense numbers are generated automatically as `EXP-YYYYMMDD-XXXXXX`.
-- Expenses are money records only; reports, payments, attachments and GST treatment are intentionally not included yet.
+## Labour scope in this first version
+- Owners and partners can create labour payment records.
+- Worker name and amount are required; work description is optional.
+- Labour date is stored separately from the system creation timestamp.
+- Labour numbers are generated automatically as `LAB-YYYYMMDD-XXXXXX`.
+- Labour records are payment records only; attendance, worker master records, advances, daily-rate calculations and reports are intentionally not included yet.
 
 ## Next module
-After Expenses is verified, move to **Labour**, then return to the money/history/dashboard improvements as needed. Stock will be designed from verified Sales + Purchases transactions rather than adding stock quantity to Products.
+After Labour is verified, improve **Bills / recurring expenses** and then build **History + dashboard totals**. Stock will be designed from verified Sales + Purchases transactions rather than adding stock quantity to Products.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
-2. Money: sales, invoices, purchases, expenses, payments, customers/suppliers.
+2. Money: sales, invoices, purchases, expenses, labour, payments, customers/suppliers.
 3. Documents: invoice/PDF, print, Android sharing, attachments.
 4. Stock.
-5. Labour.
+5. Labour improvements / worker management.
 6. Reports/dashboard improvements.
 7. GST functionality.
 
