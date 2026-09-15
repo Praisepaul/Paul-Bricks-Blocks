@@ -1,7 +1,7 @@
 # Project Status
 
 ## Current phase
-**Phase 2 — Money: Sales + Purchases foundation**
+**Phase 2 — Money: Sales + Purchases + Expenses foundation**
 
 ## Completed
 - React + TypeScript + Vite PWA scaffold.
@@ -21,24 +21,25 @@
 - Sales creation audit events and MongoDB indexes.
 - Purchases: supplier + product + quantity + purchase price + server-calculated total + generated purchase number + recent purchases list.
 - Purchase creation audit events and MongoDB indexes.
+- Expenses: category + optional description + amount + business date + server-calculated amount + generated expense number + recent expenses list.
+- Expense creation audit events and MongoDB indexes.
 
 ## Current branch
 `main`
 
 ## Current module
-**Purchases** — ready for local verification.
+**Expenses** — ready for local verification.
 
-## Purchase scope in this first version
-- Owners and partners can create purchases.
-- Supplier name is required and stored with the purchase.
-- Only active products can be selected.
-- Product purchase price is prefilled but can be changed for a specific purchase.
-- Historical purchases keep supplier/product names, unit, quantity and final purchase price.
-- Purchase numbers are generated automatically as `PUR-YYYYMMDD-XXXXXX`.
-- Stock, payments, GST calculation, PDF/printing and supplier master management are intentionally not included yet.
+## Expense scope in this first version
+- Owners and partners can create expenses.
+- Category and amount are required; description is optional.
+- Expense date is stored separately from the system creation timestamp.
+- Starter categories are Electricity, Transport, Diesel, Repairs, Office, Rent and Other.
+- Expense numbers are generated automatically as `EXP-YYYYMMDD-XXXXXX`.
+- Expenses are money records only; reports, payments, attachments and GST treatment are intentionally not included yet.
 
 ## Next module
-After Purchases is verified, build the next money-flow piece, likely **Expenses**, then design **Stock movements** using the verified Sales + Purchases transactions rather than adding stock quantity to Products.
+After Expenses is verified, move to **Labour**, then return to the money/history/dashboard improvements as needed. Stock will be designed from verified Sales + Purchases transactions rather than adding stock quantity to Products.
 
 ## Planned phases
 1. Foundation: authentication, users, RBAC, database, business settings, customers, products, dashboard, audit framework.
