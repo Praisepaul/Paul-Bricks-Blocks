@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
 import { signIn, signOut } from '../lib/auth/auth'
 import { useAuth } from '../lib/auth/AuthProvider'
+import { getDashboardTotals, type DashboardTotals } from '../lib/dashboard'
 import { Customers } from './Customers'
 import { Products } from './Products'
 import { Sales } from './Sales'
@@ -9,6 +10,7 @@ import { Purchases } from './Purchases'
 import { Expenses } from './Expenses'
 import { Labour } from './Labour'
 import { Bills } from './Bills'
+import { History } from './History'
 import { Users } from './Users'
 import { Settings } from './Settings'
 
@@ -32,7 +34,7 @@ function AuthenticatedApp({ roleLabel }: { roleLabel: string }) {
   const visibleSections = isOwner ? [...sections, { id: 'users' as Section, label: 'Users' }, { id: 'settings' as Section, label: 'Settings' }] : sections
   return <div className="app-shell">
     <header className="topbar"><div><p className="eyebrow">Paul Bricks & Blocks</p><h1>{getSectionTitle(activeSection)}</h1></div><div className="user-badge">{roleLabel}</div></header>
-    <main className="page-content">{activeSection === 'dashboard' ? <Dashboard onNewSale={() => setActiveSection('sales')} onNewPurchase={() => setActiveSection('purchases')} onNewExpense={() => setActiveSection('expenses')} onNewLabour={() => setActiveSection('labour')} onNewBill={() => setActiveSection('bills')} /> : activeSection === 'customers' ? <Customers /> : activeSection === 'products' ? <Products /> : activeSection === 'sales' ? <Sales /> : activeSection === 'purchases' ? <Purchases /> : activeSection === 'expenses' ? <Expenses /> : activeSection === 'labour' ? <Labour /> : activeSection === 'bills' ? <Bills /> : activeSection === 'users' && isOwner ? <Users /> : activeSection === 'settings' && isOwner ? <Settings /> : <Placeholder section={activeSection}/>}<div className="account-strip"><span>{user?.email ?? 'Signed in'}</span><Button variant="secondary" onClick={() => void signOut()}>Sign out</Button></div></main>
+    <main className="page-content">{activeSection === 'dashboard' ? <Dashboard onNewSale={() => setActiveSection('sales')} onNewPurchase={() => setActiveSection('purchases')} onNewExpense={() => setActiveSection('expenses')} onNewLabour={() => setActiveSection('labour')} onNewBill={() => setActiveSection('bills')} /> : activeSection === 'customers' ? <Customers /> : activeSection === 'products' ? <Products /> : activeSection === 'sales' ? <Sales /> : activeSection === 'purchases' ? <Purchases /> : activeSection === 'expenses' ? <Expenses /> : activeSection === 'labour' ? <Labour /> : activeSection === 'bills' ? <Bills /> : activeSection === 'history' ? <History /> : activeSection === 'users' && isOwner ? <Users /> : activeSection === 'settings' && isOwner ? <Settings /> : <Placeholder section={activeSection}/>}<div className="account-strip"><span>{user?.email ?? 'Signed in'}</span><Button variant="secondary" onClick={() => void signOut()}>Sign out</Button></div></main>
     <nav className="bottom-nav" aria-label="Main navigation">{visibleSections.map((section) => <Button key={section.id} variant={activeSection === section.id ? 'active' : 'nav'} onClick={() => setActiveSection(section.id)}>{section.label}</Button>)}</nav>
   </div>
 }
@@ -40,7 +42,13 @@ function SignInScreen() { const [email, setEmail] = useState(''); const [passwor
 function ConfigurationNotice() { return <main className="auth-screen"><section className="auth-card"><p className="eyebrow">Setup needed</p><h1>Start the API</h1><p>The MERN API is not reachable yet. Start the Node server and check the local API settings.</p></section></main> }
 function LoadingScreen() { return <main className="auth-screen"><section className="auth-card"><p>Loading your account…</p></section></main> }
 function InactiveAccount() { return <main className="auth-screen"><section className="auth-card"><p className="eyebrow">Account unavailable</p><h1>Contact the owner</h1><p>This account is currently inactive.</p></section></main> }
-function Dashboard({ onNewSale, onNewPurchase, onNewExpense, onNewLabour, onNewBill }: { onNewSale: () => void; onNewPurchase: () => void; onNewExpense: () => void; onNewLabour: () => void; onNewBill: () => void }) { return <><section className="welcome-card"><p className="eyebrow">Good morning</p><h2>What do you want to do?</h2><div className="action-grid"><Button variant="primary" onClick={onNewSale}>+ New Sale</Button><Button variant="secondary" onClick={onNewPurchase}>+ Add Purchase</Button><Button variant="secondary" onClick={onNewExpense}>+ Add Expense</Button><Button variant="secondary" onClick={onNewLabour}>+ Add Labour</Button><Button variant="secondary" onClick={onNewBill}>+ Add Bill</Button></div></section><section className="summary-grid"><SummaryCard label="Today's Sales" value="₹0"/><SummaryCard label="Today's Expenses" value="₹0"/><SummaryCard label="Pending Payments" value="₹0"/></section></> }
+function Dashboard({ onNewSale, onNewPurchase, onNewExpense, onNewLabour, onNewBill }: { onNewSale: () => void; onNewPurchase: () => void; onNewExpense: () => void; onNewLabour: () => void; onNewBill: () => void }) {
+  const [totals, setTotals] = useState<DashboardTotals | null>(null)
+  const [error, setError] = useState('')
+  useEffect(() => { let active = true; void getDashboardTotals().then((result) => { if (active) setTotals(result) }).catch((errorValue) => { if (active) setError(errorValue instanceof Error ? errorValue.message : 'Unable to load totals.') }); return () => { active = false } }, [])
+  const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value)
+  return <><section className="welcome-card"><p className="eyebrow">Good morning</p><h2>What do you want to do?</h2><div className="action-grid"><Button variant="primary" onClick={onNewSale}>+ New Sale</Button><Button variant="secondary" onClick={onNewPurchase}>+ Add Purchase</Button><Button variant="secondary" onClick={onNewExpense}>+ Add Expense</Button><Button variant="secondary" onClick={onNewLabour}>+ Add Labour</Button><Button variant="secondary" onClick={onNewBill}>+ Add Bill</Button></div></section>{error && <p className="error-text" role="alert">{error}</p>}<section className="summary-grid"><SummaryCard label="Today's Sales" value={totals ? money(totals.sales) : 'Loading…'}/><SummaryCard label="Today's Expenses" value={totals ? money(totals.expenses + totals.labour) : 'Loading…'}/><SummaryCard label="Pending Bills" value={totals ? `${money(totals.unpaidBills)} (${totals.unpaidBillCount})` : 'Loading…'}/><SummaryCard label="Today's Purchases" value={totals ? money(totals.purchases) : 'Loading…'}/></section></>
+}
 function SummaryCard({ label, value }: { label: string; value: string }) { return <article className="summary-card"><p>{label}</p><strong>{value}</strong></article> }
 function Placeholder({ section }: { section: Section }) { return <section className="empty-state"><p className="eyebrow">Foundation</p><h2>{getSectionTitle(section)}</h2><p>This section will be built in the next business phase.</p></section> }
 function getSectionTitle(section: Section) { return sections.find((item) => item.id === section)?.label ?? (section === 'users' ? 'Users' : section === 'settings' ? 'Settings' : 'Home') }
