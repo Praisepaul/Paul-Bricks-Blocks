@@ -9,6 +9,7 @@ import { customersRouter } from './routes/customers.js'
 import { productsRouter } from './routes/products.js'
 import { salesRouter } from './routes/sales.js'
 import { purchasesRouter } from './routes/purchases.js'
+import { expensesRouter } from './routes/expenses.js'
 
 const app = express()
 app.use(cors({ origin: config.clientOrigin }))
@@ -21,6 +22,7 @@ app.use('/api/customers', customersRouter)
 app.use('/api/products', productsRouter)
 app.use('/api/sales', salesRouter)
 app.use('/api/purchases', purchasesRouter)
+app.use('/api/expenses', expensesRouter)
 
 async function start() {
   await connectDb()
