@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
+import { getBusinessSettings, type BusinessSettings } from '../lib/settings'
 import { listCustomers, type Customer } from '../lib/customers'
 import { listProducts, type Product } from '../lib/products'
 import { createSale, listSales, type Sale } from '../lib/sales'
@@ -10,25 +11,30 @@ export function Sales() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [sales, setSales] = useState<Sale[]>([])
+  const [business, setBusiness] = useState<BusinessSettings | null>(null)
   const [customerId, setCustomerId] = useState('')
   const [productId, setProductId] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [unitPrice, setUnitPrice] = useState('')
+  const [printSaleId, setPrintSaleId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
   const selectedProduct = useMemo(() => products.find((product) => product.id === productId), [products, productId])
+  const printSale = useMemo(() => sales.find((sale) => sale.id === printSaleId) ?? null, [sales, printSaleId])
+  const printCustomer = useMemo(() => printSale ? customers.find((customer) => customer.id === printSale.customerId) ?? null : null, [customers, printSale])
   const total = (Number(quantity) || 0) * (Number(unitPrice) || 0)
 
   async function load() {
     setLoading(true); setError('')
     try {
-      const [customerData, productData, saleData] = await Promise.all([listCustomers(), listProducts(), listSales()])
+      const [customerData, productData, saleData, settingsData] = await Promise.all([listCustomers(), listProducts(), listSales(), getBusinessSettings()])
       setCustomers(customerData.filter((item) => item.isActive))
       setProducts(productData.filter((item) => item.isActive))
       setSales(saleData)
+      setBusiness(settingsData)
     } catch (errorValue) { setError(errorValue instanceof Error ? errorValue.message : 'Unable to load sales.') }
     finally { setLoading(false) }
   }
@@ -50,6 +56,11 @@ export function Sales() {
     finally { setBusy(false) }
   }
 
+  function printInvoice(saleId: string) {
+    setPrintSaleId(saleId)
+    window.setTimeout(() => window.print(), 100)
+  }
+
   return <div className="sales-page">
     <section className="page-heading"><p className="eyebrow">Money</p><h2>Sales</h2><p>Create a simple sale and get an invoice number automatically.</p></section>
     <section className="form-card">
@@ -67,7 +78,14 @@ export function Sales() {
       </form>
     </section>
     <section className="user-list"><div className="list-heading"><h3>Recent sales</h3><Button variant="secondary" onClick={() => void load()} disabled={loading}>Refresh</Button></div>
-      {loading ? <p>Loading sales…</p> : sales.length === 0 ? <p>No sales yet.</p> : sales.map((sale) => <article className="user-row sale-row" key={sale.id}><div><strong>{sale.invoiceNumber}</strong><span>{sale.customerName} · {sale.productName} · {sale.quantity} {sale.unit}</span></div><div className="row-actions"><strong>{money.format(sale.totalAmount)}</strong></div></article>)}
+      {loading ? <p>Loading sales…</p> : sales.length === 0 ? <p>No sales yet.</p> : sales.map((sale) => <article className="user-row sale-row" key={sale.id}><div><strong>{sale.invoiceNumber}</strong><span>{sale.customerName} · {sale.productName} · {sale.quantity} {sale.unit}</span></div><div className="row-actions"><strong>{money.format(sale.totalAmount)}</strong><Button variant="secondary" type="button" onClick={() => printInvoice(sale.id)}>Print invoice</Button></div></article>)}
     </section>
+    {printSale && <section className="print-invoice" aria-label="Invoice">
+      <div className="invoice-header"><div><h1>{business?.businessName ?? 'Paul Bricks & Blocks'}</h1>{business?.address && <p>{business.address}</p>}{business?.phone && <p>Phone: {business.phone}</p>}{business?.gstNumber && <p>GST: {business.gstNumber}</p>}</div><div className="invoice-meta"><strong>INVOICE</strong><span>{printSale.invoiceNumber}</span><span>{new Date(printSale.createdAt).toLocaleDateString('en-IN')}</span></div></div>
+      <div className="invoice-customer"><strong>Bill to</strong><span>{printSale.customerName}</span>{printCustomer?.phone && <span>{printCustomer.phone}</span>}{printCustomer?.address && <span>{printCustomer.address}</span>}{printCustomer?.gstNumber && <span>GST: {printCustomer.gstNumber}</span>}</div>
+      <table className="invoice-table"><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead><tbody><tr><td>{printSale.productName}</td><td>{printSale.quantity} {printSale.unit}</td><td>{money.format(printSale.unitPrice)}</td><td>{money.format(printSale.totalAmount)}</td></tr></tbody></table>
+      <div className="invoice-total"><span>Total</span><strong>{money.format(printSale.totalAmount)}</strong></div>
+      <p className="invoice-note">Thank you for your business.</p>
+    </section>}
   </div>
 }
