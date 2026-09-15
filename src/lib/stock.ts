@@ -1,0 +1,41 @@
+export interface StockItem {
+  id: string
+  name: string
+  unit: string
+  isActive: boolean
+  purchased: number
+  sold: number
+  adjusted: number
+  quantity: number
+}
+
+export interface StockAdjustmentInput {
+  productId: string
+  type: 'opening' | 'adjustment'
+  quantity: number
+  direction: 'add' | 'remove'
+  reason: string
+}
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api'
+
+function headers() {
+  const value = new Headers({ 'Content-Type': 'application/json' })
+  const token = localStorage.getItem('pbb_auth_token')
+  if (token) value.set('Authorization', `Bearer ${token}`)
+  return value
+}
+
+export async function listStock(): Promise<StockItem[]> {
+  const response = await fetch(`${API_URL}/stock`, { headers: headers() })
+  const body = (await response.json().catch(() => ({}))) as { stock?: StockItem[]; message?: string }
+  if (!response.ok) throw new Error(body.message ?? 'Unable to load stock')
+  return body.stock ?? []
+}
+
+export async function createStockAdjustment(input: StockAdjustmentInput) {
+  const response = await fetch(`${API_URL}/stock/adjustments`, { method: 'POST', headers: headers(), body: JSON.stringify(input) })
+  const body = (await response.json().catch(() => ({}))) as { movement?: unknown; message?: string }
+  if (!response.ok) throw new Error(body.message ?? 'Unable to update stock')
+  return body.movement
+}
