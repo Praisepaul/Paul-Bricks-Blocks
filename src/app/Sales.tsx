@@ -17,6 +17,7 @@ export function Sales() {
   const [quantity, setQuantity] = useState('1')
   const [unitPrice, setUnitPrice] = useState('')
   const [printSaleId, setPrintSaleId] = useState<string | null>(null)
+  const [sharingSaleId, setSharingSaleId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -25,6 +26,8 @@ export function Sales() {
   const selectedProduct = useMemo(() => products.find((product) => product.id === productId), [products, productId])
   const printSale = useMemo(() => sales.find((sale) => sale.id === printSaleId) ?? null, [sales, printSaleId])
   const printCustomer = useMemo(() => printSale ? customers.find((customer) => customer.id === printSale.customerId) ?? null : null, [customers, printSale])
+  const sharingSale = useMemo(() => sales.find((sale) => sale.id === sharingSaleId) ?? null, [sales, sharingSaleId])
+  const sharingCustomer = useMemo(() => sharingSale ? customers.find((customer) => customer.id === sharingSale.customerId) ?? null : null, [customers, sharingSale])
   const total = (Number(quantity) || 0) * (Number(unitPrice) || 0)
 
   async function load() {
@@ -61,6 +64,41 @@ export function Sales() {
     window.setTimeout(() => window.print(), 100)
   }
 
+  async function shareInvoice(saleId: string) {
+    const sale = sales.find((item) => item.id === saleId)
+    if (!sale) return
+    const customer = customers.find((item) => item.id === sale.customerId)
+    const lines = [
+      business?.businessName ?? 'Paul Bricks & Blocks',
+      `Invoice: ${sale.invoiceNumber}`,
+      `Date: ${new Date(sale.createdAt).toLocaleDateString('en-IN')}`,
+      `Customer: ${sale.customerName}`,
+      `${sale.productName}: ${sale.quantity} ${sale.unit} × ${money.format(sale.unitPrice)}`,
+      `Total: ${money.format(sale.totalAmount)}`,
+    ]
+    if (customer?.phone) lines.push(`Customer phone: ${customer.phone}`)
+    const text = lines.join('\n')
+    setSharingSaleId(saleId)
+    setError('')
+    setSuccess('')
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Invoice ${sale.invoiceNumber}`, text })
+        setSuccess('Invoice details shared successfully.')
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text)
+        setSuccess('Invoice details copied. You can paste them into WhatsApp or another app.')
+      } else {
+        setSuccess('Sharing is not available on this device. Use Print invoice and save as PDF.')
+      }
+    } catch (errorValue) {
+      if (errorValue instanceof DOMException && errorValue.name === 'AbortError') return
+      setError('Unable to share the invoice. You can still use Print invoice.')
+    } finally {
+      setSharingSaleId(null)
+    }
+  }
+
   return <div className="sales-page">
     <section className="page-heading"><p className="eyebrow">Money</p><h2>Sales</h2><p>Create a simple sale and get an invoice number automatically.</p></section>
     <section className="form-card">
@@ -78,7 +116,7 @@ export function Sales() {
       </form>
     </section>
     <section className="user-list"><div className="list-heading"><h3>Recent sales</h3><Button variant="secondary" onClick={() => void load()} disabled={loading}>Refresh</Button></div>
-      {loading ? <p>Loading sales…</p> : sales.length === 0 ? <p>No sales yet.</p> : sales.map((sale) => <article className="user-row sale-row" key={sale.id}><div><strong>{sale.invoiceNumber}</strong><span>{sale.customerName} · {sale.productName} · {sale.quantity} {sale.unit}</span></div><div className="row-actions"><strong>{money.format(sale.totalAmount)}</strong><Button variant="secondary" type="button" onClick={() => printInvoice(sale.id)}>Print invoice</Button></div></article>)}
+      {loading ? <p>Loading sales…</p> : sales.length === 0 ? <p>No sales yet.</p> : sales.map((sale) => <article className="user-row sale-row" key={sale.id}><div><strong>{sale.invoiceNumber}</strong><span>{sale.customerName} · {sale.productName} · {sale.quantity} {sale.unit}</span></div><div className="row-actions"><strong>{money.format(sale.totalAmount)}</strong><Button variant="secondary" type="button" onClick={() => printInvoice(sale.id)}>Print invoice</Button><Button variant="secondary" type="button" onClick={() => void shareInvoice(sale.id)} disabled={sharingSaleId === sale.id}>{sharingSaleId === sale.id ? 'Sharing…' : 'Share invoice'}</Button></div></article>)}
     </section>
     {printSale && <section className="print-invoice" aria-label="Invoice">
       <div className="invoice-header"><div><h1>{business?.businessName ?? 'Paul Bricks & Blocks'}</h1>{business?.address && <p>{business.address}</p>}{business?.phone && <p>Phone: {business.phone}</p>}{business?.gstNumber && <p>GST: {business.gstNumber}</p>}</div><div className="invoice-meta"><strong>INVOICE</strong><span>{printSale.invoiceNumber}</span><span>{new Date(printSale.createdAt).toLocaleDateString('en-IN')}</span></div></div>
@@ -87,5 +125,6 @@ export function Sales() {
       <div className="invoice-total"><span>Total</span><strong>{money.format(printSale.totalAmount)}</strong></div>
       <p className="invoice-note">Thank you for your business.</p>
     </section>}
+    {sharingSale && <section className="share-preview" aria-label="Invoice sharing preview"><h3>Invoice ready to share</h3><p>{sharingSale.invoiceNumber} · {sharingSale.customerName} · {money.format(sharingSale.totalAmount)}</p><p className="field-hint">On phones with sharing support, your normal share menu will open. Otherwise the invoice details are copied for easy pasting.</p></section>}
   </div>
 }
