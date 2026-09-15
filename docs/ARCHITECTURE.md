@@ -35,17 +35,18 @@ A mobile-first, installable PWA for simple business management. The system is de
 - `expenses`: business expense records with generated expense number, category, optional description, amount, business date and creator.
 - `labour`: worker payment records with generated labour number, worker name, optional work description, amount, business date and creator.
 - `bills`: bill records with generated bill number, title, category, amount, bill date, optional due date, paid status/date, optional notes and creator.
+- `stock_movements`: manual opening-stock and stock-correction entries. Purchase and sale quantities are read directly from their transaction records when calculating current stock.
 
 ## Authentication and permissions
 - Owner: full business administration, including users and settings.
-- Partner: day-to-day business operations such as customers, products, sales, purchases, expenses, labour and bills.
+- Partner: day-to-day business operations such as customers, products, sales, purchases, expenses, labour, bills and stock.
 - Backend authorization is authoritative; frontend visibility is only a usability feature.
 
 ## Customers
 Authenticated owners and partners can create, view, edit and enable/disable customers through `/api/customers`. Customer records are not physically deleted because future sales may reference them. Customer create/update actions are recorded in the audit log.
 
 ## Products / brick types
-Authenticated owners and partners can create, view, edit and enable/disable products through `/api/products`. Each product has a name, selling unit, selling price and purchase price. Prices are stored as non-negative numbers in INR. Stock quantity is deliberately not part of this master record yet; stock will be introduced with purchase/sales transactions.
+Authenticated owners and partners can create, view, edit and enable/disable products through `/api/products`. Each product has a name, selling unit, selling price and purchase price. Prices are stored as non-negative numbers in INR. Stock quantity is deliberately not part of this master record; stock is derived from transactions plus explicit stock movements.
 
 ## Sales
 Authenticated owners and partners can create and view sales through `/api/sales`.
@@ -54,7 +55,7 @@ Authenticated owners and partners can create and view sales through `/api/sales`
 - The server generates a unique invoice number in the form `INV-YYYYMMDD-XXXXXX`.
 - Customer name, product name and unit are snapshotted into the sale for stable historical display.
 - Total is calculated on the server and rounded to two decimal places.
-- Sales are currently informational money records; stock deduction, tax, payments and PDF invoices will be added in later phases.
+- Sales are informational money records, and their quantities are used by Stock as stock-out quantities.
 - Sale creation is recorded in `audit_events`.
 
 ## Purchases
@@ -64,9 +65,19 @@ Authenticated owners and partners can create and view purchases through `/api/pu
 - The server generates a unique purchase number in the form `PUR-YYYYMMDD-XXXXXX`.
 - Product name and unit are snapshotted into the purchase.
 - Total is calculated on the server and rounded to two decimal places.
-- Purchases currently record the money transaction only; stock increases will be introduced through a dedicated stock movement design.
+- Purchases record the money transaction, and their quantities are used by Stock as stock-in quantities.
 - Purchase creation is recorded in `audit_events`.
 - Supplier is currently stored as a required text snapshot. A dedicated supplier master can be added later when supplier management becomes useful.
+
+## Stock
+Authenticated owners and partners can view current stock through `/api/stock` and record opening stock or corrections through `/api/stock/adjustments`.
+- Stock is intentionally not stored as a mutable quantity on the Product master.
+- Current quantity is calculated as **all purchase quantity - all sale quantity + all manual stock movement quantity** for each product.
+- Manual stock movements are signed quantities: adding stock stores a positive quantity and removing stock stores a negative quantity.
+- Opening stock can only add quantity; corrections can add or remove quantity.
+- Every manual movement stores the product snapshot, reason, creator and creation time, and creates an audit event.
+- This design automatically includes existing sales and purchases and keeps the source transactions intact.
+- A later phase can add richer movement history, stock valuation, low-stock alerts and reports without changing the basic Product master.
 
 ## Expenses
 Authenticated owners and partners can create and view expenses through `/api/expenses`.
