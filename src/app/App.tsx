@@ -11,13 +11,14 @@ import { Expenses } from './Expenses'
 import { Labour } from './Labour'
 import { Bills } from './Bills'
 import { History } from './History'
+import { Stock } from './Stock'
 import { Users } from './Users'
 import { Settings } from './Settings'
 
-type Section = 'dashboard' | 'customers' | 'products' | 'sales' | 'purchases' | 'expenses' | 'labour' | 'bills' | 'history' | 'users' | 'settings'
+type Section = 'dashboard' | 'customers' | 'products' | 'sales' | 'purchases' | 'expenses' | 'labour' | 'bills' | 'stock' | 'history' | 'users' | 'settings'
 const sections: Array<{ id: Section; label: string }> = [
   { id: 'dashboard', label: 'Home' }, { id: 'customers', label: 'Customers' }, { id: 'products', label: 'Products' }, { id: 'sales', label: 'Sales' }, { id: 'purchases', label: 'Purchases' }, { id: 'expenses', label: 'Expenses' }, { id: 'labour', label: 'Labour' },
-  { id: 'bills', label: 'Bills' }, { id: 'history', label: 'History' },
+  { id: 'bills', label: 'Bills' }, { id: 'stock', label: 'Stock' }, { id: 'history', label: 'History' },
 ]
 export function App() {
   const { loading, configured, session, user } = useAuth()
@@ -34,7 +35,7 @@ function AuthenticatedApp({ roleLabel }: { roleLabel: string }) {
   const visibleSections = isOwner ? [...sections, { id: 'users' as Section, label: 'Users' }, { id: 'settings' as Section, label: 'Settings' }] : sections
   return <div className="app-shell">
     <header className="topbar"><div><p className="eyebrow">Paul Bricks & Blocks</p><h1>{getSectionTitle(activeSection)}</h1></div><div className="user-badge">{roleLabel}</div></header>
-    <main className="page-content">{activeSection === 'dashboard' ? <Dashboard onNewSale={() => setActiveSection('sales')} onNewPurchase={() => setActiveSection('purchases')} onNewExpense={() => setActiveSection('expenses')} onNewLabour={() => setActiveSection('labour')} onNewBill={() => setActiveSection('bills')} /> : activeSection === 'customers' ? <Customers /> : activeSection === 'products' ? <Products /> : activeSection === 'sales' ? <Sales /> : activeSection === 'purchases' ? <Purchases /> : activeSection === 'expenses' ? <Expenses /> : activeSection === 'labour' ? <Labour /> : activeSection === 'bills' ? <Bills /> : activeSection === 'history' ? <History /> : activeSection === 'users' && isOwner ? <Users /> : activeSection === 'settings' && isOwner ? <Settings /> : <Placeholder section={activeSection}/>}<div className="account-strip"><span>{user?.email ?? 'Signed in'}</span><Button variant="secondary" onClick={() => void signOut()}>Sign out</Button></div></main>
+    <main className="page-content">{activeSection === 'dashboard' ? <Dashboard onNewSale={() => setActiveSection('sales')} onNewPurchase={() => setActiveSection('purchases')} onNewExpense={() => setActiveSection('expenses')} onNewLabour={() => setActiveSection('labour')} onNewBill={() => setActiveSection('bills')} /> : activeSection === 'customers' ? <Customers /> : activeSection === 'products' ? <Products /> : activeSection === 'sales' ? <Sales /> : activeSection === 'purchases' ? <Purchases /> : activeSection === 'expenses' ? <Expenses /> : activeSection === 'labour' ? <Labour /> : activeSection === 'bills' ? <Bills /> : activeSection === 'stock' ? <Stock /> : activeSection === 'history' ? <History /> : activeSection === 'users' && isOwner ? <Users /> : activeSection === 'settings' && isOwner ? <Settings /> : <Placeholder section={activeSection}/>}<div className="account-strip"><span>{user?.email ?? 'Signed in'}</span><Button variant="secondary" onClick={() => void signOut()}>Sign out</Button></div></main>
     <nav className="bottom-nav" aria-label="Main navigation">{visibleSections.map((section) => <Button key={section.id} variant={activeSection === section.id ? 'active' : 'nav'} onClick={() => setActiveSection(section.id)}>{section.label}</Button>)}</nav>
   </div>
 }
